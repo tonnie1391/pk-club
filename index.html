@@ -107,7 +107,7 @@
                     <span id="sync-status-badge" class="bg-amber-100 text-amber-800 text-[10px] px-2 py-0.5 rounded-full font-bold">Chưa kết nối</span>
                 </div>
                 <div id="local-status-container" class="w-full flex items-center justify-between">
-                    <span class="text-slate-400 italic">Dữ liệu không lưu vào đám mây</span>
+                    <span class="text-slate-400 italic">Dữ liệu lưu trên thiết bị này</span>
                     <span class="bg-slate-100 text-slate-600 text-[10px] px-2 py-0.5 rounded-full font-bold">Bộ nhớ máy</span>
                 </div>
             </div>
@@ -242,32 +242,100 @@
         <span id="toast-message">Thông báo</span>
     </div>
 
-    <!-- Edit Name & Rank Modal -->
-    <div id="edit-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl p-5 w-full max-w-sm shadow-xl space-y-4">
-            <h3 class="font-bold text-slate-800 text-base">Cập nhật thành viên</h3>
-            <div>
-                <label class="text-xs text-slate-500 font-medium mb-1 block">Tên thành viên:</label>
-                <input type="text" id="edit-member-name" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-court-500 outline-none">
+    <!-- Redesigned Modern Admin Login Modal -->
+    <div id="login-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 hidden flex items-center justify-center p-4 queue-item-enter">
+        <div class="bg-white rounded-3xl p-6 w-full max-w-xs shadow-2xl space-y-5 border border-slate-100 relative overflow-hidden">
+            <div class="absolute -top-10 -right-10 w-24 h-24 bg-amber-400/20 rounded-full blur-xl pointer-events-none"></div>
+            
+            <div class="text-center relative">
+                <div class="w-14 h-14 bg-gradient-to-tr from-amber-500 to-amber-300 text-court-900 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg shadow-amber-500/20 text-2xl font-bold">
+                    <i class="fa-solid fa-key"></i>
+                </div>
+                <h3 class="font-extrabold text-slate-800 text-base">Đăng Nhập Admin</h3>
+                <p class="text-[11px] text-slate-400 mt-0.5">Nhập mật khẩu để mở khóa quyền quản lý</p>
             </div>
-            <div>
-                <label class="text-xs text-slate-500 font-medium mb-1 block">Trình độ (Cấp bậc):</label>
-                <select id="edit-member-rank" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-court-500 outline-none">
-                    <option value="A+">A+ (Đỉnh cao / Chuyên nghiệp)</option>
-                    <option value="A">A (Rất giỏi)</option>
-                    <option value="A-">A- (Giỏi)</option>
-                    <option value="B+">B+ (Khá tốt)</option>
-                    <option value="B">B (Trung bình khá)</option>
-                    <option value="B-">B- (Trung bình)</option>
-                    <option value="C+">C+ (Yếu khá)</option>
-                    <option value="C">C (Mới chơi / Yếu)</option>
-                    <option value="C-">C- (Tập sự)</option>
-                </select>
+
+            <div class="space-y-2">
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                        <i class="fa-solid fa-lock text-xs"></i>
+                    </span>
+                    <input type="password" id="admin-pass-input" placeholder="Nhập mật khẩu Admin..." 
+                        class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-court-500 focus:bg-white transition text-center font-semibold text-slate-700 placeholder:font-normal placeholder:text-slate-400"
+                        onkeydown="if(event.key==='Enter') submitAdminLogin()">
+                </div>
+                <p id="admin-pass-error" class="text-[11px] text-red-500 text-center font-medium hidden flex items-center justify-center gap-1">
+                    <i class="fa-solid fa-circle-exclamation"></i> <span>Mật khẩu không chính xác!</span>
+                </p>
             </div>
+
+            <div class="flex gap-2 pt-1">
+                <button onclick="closeLoginModal()" class="w-1/2 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-600 text-xs font-bold transition tap-active">
+                    Hủy
+                </button>
+                <button onclick="submitAdminLogin()" class="w-1/2 py-2.5 rounded-xl bg-gradient-to-r from-court-600 to-court-700 hover:from-court-700 hover:to-court-800 text-white text-xs font-bold shadow-md shadow-court-600/30 transition tap-active flex items-center justify-center gap-1.5">
+                    <span>Xác nhận</span>
+                    <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Redesigned Modern Edit Name & Rank Modal -->
+    <div id="edit-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 hidden flex items-center justify-center p-4 queue-item-enter">
+        <div class="bg-white rounded-3xl p-6 w-full max-w-xs shadow-2xl space-y-4 border border-slate-100 relative overflow-hidden">
+            <div class="absolute -top-10 -right-10 w-24 h-24 bg-court-500/10 rounded-full blur-xl pointer-events-none"></div>
+
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-10 h-10 bg-court-100 text-court-700 rounded-xl flex items-center justify-center font-bold">
+                        <i class="fa-solid fa-user-pen"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-slate-800 text-sm">Sửa Thành Viên</h3>
+                        <p class="text-[10px] text-slate-400">Cập nhật thông tin và cấp bậc</p>
+                    </div>
+                </div>
+                <button onclick="closeEditModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-400 hover:text-slate-600 flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark text-xs"></i>
+                </button>
+            </div>
+
+            <div class="space-y-3 pt-1">
+                <div>
+                    <label class="text-[11px] text-slate-500 font-semibold mb-1 block">Tên thành viên:</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                            <i class="fa-solid fa-user text-xs"></i>
+                        </span>
+                        <input type="text" id="edit-member-name" class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-court-500 focus:bg-white outline-none transition">
+                    </div>
+                </div>
+                <div>
+                    <label class="text-[11px] text-slate-500 font-semibold mb-1 block">Trình độ (Cấp bậc):</label>
+                    <select id="edit-member-rank" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-court-500 focus:bg-white outline-none transition">
+                        <option value="A+">A+ (Đỉnh cao / Chuyên nghiệp)</option>
+                        <option value="A">A (Rất giỏi)</option>
+                        <option value="A-">A- (Giỏi)</option>
+                        <option value="B+">B+ (Khá tốt)</option>
+                        <option value="B">B (Trung bình khá)</option>
+                        <option value="B-">B- (Trung bình)</option>
+                        <option value="C+">C+ (Yếu khá)</option>
+                        <option value="C">C (Mới chơi / Yếu)</option>
+                        <option value="C-">C- (Tập sự)</option>
+                    </select>
+                </div>
+            </div>
+
             <input type="hidden" id="edit-member-id">
-            <div class="flex justify-end gap-2 pt-2">
-                <button onclick="closeEditModal()" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-600 text-xs font-medium hover:bg-slate-200">Hủy</button>
-                <button onclick="saveMemberName()" class="px-4 py-2 rounded-xl bg-court-600 text-white text-xs font-medium hover:bg-court-700">Lưu thay đổi</button>
+
+            <div class="flex gap-2 pt-2">
+                <button onclick="closeEditModal()" class="w-1/2 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-600 text-xs font-bold transition tap-active">
+                    Hủy
+                </button>
+                <button onclick="saveMemberName()" class="w-1/2 py-2.5 rounded-xl bg-court-600 hover:bg-court-700 active:bg-court-800 text-white text-xs font-bold shadow-md shadow-court-600/30 transition tap-active">
+                    Lưu lại
+                </button>
             </div>
         </div>
     </div>
@@ -301,7 +369,7 @@
     <script>
         // =========================================================================
         // CẤU HÌNH ĐƯỜNG DẪN GOOGLE APPS SCRIPT CỦA BẠN TẠI ĐÂY:
-        const DEFAULT_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbxp8QNDuiU7ZD_-CoOTyX83zysiPuTt89WmKwK3rJSCDQLCMv8bKGNq0TrqZ5ZaaPSpYA/exec';
+        const DEFAULT_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbx...DÁN_LINK_CỦA_BẠN_VÀO_ĐÂY.../exec';
         const ADMIN_PASSWORD = '123456';
         // =========================================================================
 
@@ -333,6 +401,44 @@
         let storageMode = localStorage.getItem('badminton_storage_mode') || 'local';
         let sheetsScriptUrl = localStorage.getItem('badminton_sheets_url') || DEFAULT_SHEETS_URL;
         let isAdmin = localStorage.getItem('badminton_is_admin') === 'true';
+
+        // Admin Auth Modal Functions
+        function openLoginModal() {
+            const modal = document.getElementById('login-modal');
+            const passInput = document.getElementById('admin-pass-input');
+            const errEl = document.getElementById('admin-pass-error');
+            if (modal) {
+                if (errEl) errEl.classList.add('hidden');
+                modal.classList.remove('hidden');
+                if (passInput) {
+                    passInput.value = '';
+                    setTimeout(() => passInput.focus(), 100);
+                }
+            }
+        }
+
+        function closeLoginModal() {
+            const modal = document.getElementById('login-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function submitAdminLogin() {
+            const passInput = document.getElementById('admin-pass-input');
+            const errEl = document.getElementById('admin-pass-error');
+            const pass = passInput ? passInput.value : '';
+            if (pass === ADMIN_PASSWORD) {
+                isAdmin = true;
+                localStorage.setItem('badminton_is_admin', 'true');
+                if (errEl) errEl.classList.add('hidden');
+                closeLoginModal();
+                applyAdminUI();
+                render();
+                showToast("Đã đăng nhập quyền Admin!");
+            } else {
+                if (errEl) errEl.classList.remove('hidden');
+                if (passInput) passInput.focus();
+            }
+        }
 
         const RANK_CONFIG = {
             'A+': { bg: 'bg-rose-600', text: 'text-white', border: 'border-rose-700', label: 'A+' },
@@ -471,7 +577,10 @@
         }
 
         async function fetchFromGoogleSheets() {
-            if (storageMode !== 'cloud' || !sheetsScriptUrl) return;
+            if (storageMode !== 'cloud' || !sheetsScriptUrl || !sheetsScriptUrl.startsWith('http')) {
+                updateSyncBadge(false);
+                return;
+            }
             try {
                 updateSyncBadge(true);
                 const res = await fetch(sheetsScriptUrl);
@@ -490,7 +599,7 @@
         }
 
         async function saveToGoogleSheets() {
-            if (storageMode !== 'cloud' || !sheetsScriptUrl) return;
+            if (storageMode !== 'cloud' || !sheetsScriptUrl || !sheetsScriptUrl.startsWith('http')) return;
             try {
                 await fetch(sheetsScriptUrl, {
                     method: 'POST',
