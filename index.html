@@ -617,11 +617,18 @@
             }
         }
 
-        // Add New Member with Rank
+        // Helper định dạng thời gian trực tuyến
+        function formatLastOnline(timestamp) {
+            if (!timestamp) return 'Chưa rõ';
+            const date = new Date(Number(timestamp));
+            return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')} ${date.getDate()}/${date.getMonth() + 1}`;
+        }
+        
+        // Add New Member with Rank (Cho phép Local không cần Admin, Cloud cần Admin)
         function handleAddMember(e) {
             e.preventDefault();
-            if (!isAdmin) {
-                showToast("Bạn cần đăng nhập Admin để thêm thành viên!");
+            if (storageMode === 'cloud' && !isAdmin) {
+                showToast("Chế độ Cloud yêu cầu đăng nhập Admin để thêm thành viên!");
                 return;
             }
             const input = document.getElementById('member-name-input');
@@ -637,7 +644,8 @@
                 rank: rank,
                 active: true,
                 matchesPlayed: 0,
-                timestamp: Date.now()
+                timestamp: Date.now(),
+                lastOnline: formatLastOnline(Date.now())
             };
 
             members.push(newMember);
@@ -662,8 +670,9 @@
 
         // Toggle Active State (ON/OFF)
         function toggleMemberActive(id) {
-            if (!isAdmin) {
-                showToast("Vui lòng đăng nhập Admin để bật/tắt thành viên!");
+            // Nếu dùng Cloud mà chưa đăng nhập Admin thì chặn
+            if (storageMode === 'cloud' && !isAdmin) {
+                showToast("Chế độ Cloud yêu cầu quyền Admin để thay đổi ON/OFF!");
                 return;
             }
             const member = members.find(m => m.id === id);
@@ -671,6 +680,7 @@
                 member.active = !member.active;
                 if (member.active) {
                     member.timestamp = Date.now();
+                    member.lastOnline = formatLastOnline(Date.now());
                 }
                 saveToStorage();
                 showToast(`${member.name}: ${member.active ? 'Đã ON (Có mặt)' : 'Đã OFF (Vắng)'}`);
@@ -680,8 +690,8 @@
 
         // Move single member to bottom of Queue
         function moveToBottom(id) {
-            if (!isAdmin) {
-                showToast("Vui lòng đăng nhập Admin để xếp lượt!");
+            if (storageMode === 'cloud' && !isAdmin) {
+                showToast("Chế độ Cloud yêu cầu quyền Admin để xếp lượt!");
                 return;
             }
             const member = members.find(m => m.id === id);
@@ -710,8 +720,8 @@
 
         // Delete Member
         function deleteMember(id, name) {
-            if (!isAdmin) {
-                showToast("Cần quyền Admin để xóa!");
+            if (storageMode === 'cloud' && !isAdmin) {
+                showToast("Chế độ Cloud yêu cầu quyền Admin để xóa!");
                 return;
             }
             if (confirm(`Bạn có chắc chắn muốn xóa thành viên "${name}"?`)) {
@@ -724,8 +734,8 @@
 
         // Edit Member Modal
         function openEditModal(id, name, rank) {
-            if (!isAdmin) {
-                showToast("Cần quyền Admin để chỉnh sửa!");
+            if (storageMode === 'cloud' && !isAdmin) {
+                showToast("Chế độ Cloud yêu cầu quyền Admin để chỉnh sửa!");
                 return;
             }
             document.getElementById('edit-member-id').value = id;
@@ -739,7 +749,6 @@
         }
 
         function saveMemberName() {
-            if (!isAdmin) return;
             const id = document.getElementById('edit-member-id').value;
             const newName = document.getElementById('edit-member-name').value.trim();
             const newRank = document.getElementById('edit-member-rank').value;
@@ -785,19 +794,15 @@
 
         // Render UI
         function render() {
-            // Admin Section Visibility Toggle
             const addSection = document.getElementById('admin-add-section');
-            const storageStatusWrapper = document.getElementById('storage-status-wrapper');
             
+            // Ở chế độ Local: Mọi người đều thấy ô thêm thành viên. Ở Cloud: Chỉ Admin mới thấy.
             if (addSection) {
-                if (isAdmin) addSection.classList.remove('hidden');
-                else addSection.classList.add('hidden');
-            }
-
-            // Only show storage status bar when Admin is logged in
-            if (storageStatusWrapper) {
-                if (isAdmin) storageStatusWrapper.classList.remove('hidden');
-                else storageStatusWrapper.classList.add('hidden');
+                if (storageMode === 'local' || isAdmin) {
+                    addSection.classList.remove('hidden');
+                } else {
+                    addSection.classList.add('hidden');
+                }
             }
 
             let activeQueue = members
@@ -806,19 +811,18 @@
 
             let allMembersSorted = [...members].sort((a, b) => a.name.localeCompare(b.name, 'vi'));
 
-            // Apply Rank Filtering if not ALL
             if (currentFilterRank !== 'ALL') {
                 activeQueue = activeQueue.filter(m => (m.rank || 'B') === currentFilterRank);
                 allMembersSorted = allMembersSorted.filter(m => (m.rank || 'B') === currentFilterRank);
             }
 
-            // Update Counters
             document.getElementById('tab-queue-count').innerText = members.filter(m => m.active).length;
             document.getElementById('tab-members-count').innerText = members.length;
 
-            // Render Queue Tab
+            // Render Queue Tab (Local cho phép bấm xếp lượt, Cloud cần Admin hoặc tuỳ ý)
             const queueListContainer = document.getElementById('queue-list');
             const queueEmpty = document.getElementById('queue-empty');
+            const canInteractQueue = (storageMode === 'local' || isAdmin);
 
             if (activeQueue.length === 0) {
                 queueListContainer.innerHTML = '';
@@ -834,8 +838,8 @@
                     else if (isNextInLine) badgeColor = "bg-emerald-100 text-emerald-800 font-bold border-emerald-200";
 
                     return `
-                        <div ${isAdmin ? `onclick="moveToBottom('${m.id}')"` : ''} 
-                            class="queue-item-enter bg-white rounded-2xl p-3.5 border border-slate-200/90 shadow-sm ${isAdmin ? 'hover:border-court-500 active:border-court-600 cursor-pointer tap-active' : ''} flex items-center justify-between group">
+                        <div ${canInteractQueue ? `onclick="moveToBottom('${m.id}')"` : ''} 
+                            class="queue-item-enter bg-white rounded-2xl p-3.5 border border-slate-200/90 shadow-sm ${canInteractQueue ? 'hover:border-court-500 active:border-court-600 cursor-pointer tap-active' : ''} flex items-center justify-between group">
                             
                             <div class="flex items-center gap-3">
                                 <div class="w-8 h-8 rounded-xl flex items-center justify-center text-sm ${badgeColor}">
@@ -853,7 +857,7 @@
                                 </div>
                             </div>
 
-                            ${isAdmin ? `
+                            ${canInteractQueue ? `
                             <div class="flex items-center gap-2">
                                 <span class="text-[11px] font-medium text-slate-400 group-hover:text-court-600 transition flex items-center gap-1">
                                     Xuống cuối <i class="fa-solid fa-arrow-down-long"></i>
@@ -865,9 +869,10 @@
                 }).join('');
             }
 
-            // Render Members ON/OFF Tab
+            // Render Members ON/OFF Tab (Đã thay số trận thành lần cuối trực tuyến, bỏ gạch ngang tên)
             const membersListContainer = document.getElementById('members-list');
             const membersEmpty = document.getElementById('members-empty');
+            const canInteractMembers = (storageMode === 'local' || isAdmin);
 
             if (allMembersSorted.length === 0) {
                 membersListContainer.innerHTML = '';
@@ -878,28 +883,24 @@
                     return `
                         <div class="bg-white rounded-2xl p-3.5 border border-slate-200/90 shadow-sm flex items-center justify-between">
                             <div class="flex items-center gap-3">
-                                ${isAdmin ? `
                                 <button onclick="toggleMemberActive('${m.id}')" 
                                     class="w-12 h-6 rounded-full transition-colors relative focus:outline-none ${m.active ? 'bg-court-600' : 'bg-slate-300'}">
                                     <div class="w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform ${m.active ? 'translate-x-6' : 'translate-x-0.5'} shadow-md flex items-center justify-center text-[10px]">
                                         ${m.active ? '<i class="fa-solid fa-check text-court-600"></i>' : ''}
                                     </div>
                                 </button>
-                                ` : `
-                                <div class="w-2.5 h-2.5 rounded-full ${m.active ? 'bg-emerald-500' : 'bg-slate-300'}"></div>
-                                `}
                                 <div>
-                                    <div class="font-semibold text-slate-800 text-sm ${m.active ? '' : 'text-slate-400 line-through'} flex items-center gap-2">
+                                    <div class="font-semibold text-slate-800 text-sm flex items-center gap-2">
                                         ${getRankBadgeHtml(m.rank || 'B')}
                                         <span class="truncate">${escapeHtml(m.name)}</span>
                                     </div>
                                     <div class="text-[11px] text-slate-400 mt-0.5">
-                                        Trạng thái: <span class="${m.active ? 'text-emerald-600 font-semibold' : 'text-slate-400'}">${m.active ? 'Đã đến (ON)' : 'Vắng mặt (OFF)'}</span> • ${m.matchesPlayed} trận
+                                        Trạng thái: <span class="${m.active ? 'text-emerald-600 font-semibold' : 'text-slate-400'}">${m.active ? 'Đã đến (ON)' : 'Vắng mặt (OFF)'}</span> • Cuối: <span class="text-slate-600 font-medium">${m.lastOnline || 'Chưa rõ'}</span>
                                     </div>
                                 </div>
                             </div>
 
-                            ${isAdmin ? `
+                            ${canInteractMembers ? `
                             <div class="flex items-center gap-1">
                                 <button onclick="openEditModal('${m.id}', '${escapeHtml(m.name)}', '${m.rank || 'B'}')" class="p-2 text-slate-400 hover:text-court-600 rounded-lg hover:bg-slate-50 transition">
                                     <i class="fa-solid fa-pen text-xs"></i>
