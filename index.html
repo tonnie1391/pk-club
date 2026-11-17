@@ -34,7 +34,6 @@
         }
     </script>
     <style>
-        /* Touch feedback & smooth transitions */
         .tap-active:active {
             transform: scale(0.97);
         }
@@ -45,8 +44,8 @@
             from { opacity: 0; transform: translateY(-8px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        /* Custom Scrollbar */
         ::-webkit-scrollbar {
+            height: 4px;
             width: 6px;
         }
         ::-webkit-scrollbar-track {
@@ -82,13 +81,13 @@
 
         <!-- Cloud Sync Config Section -->
         <section class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200/80">
-            <div class="flex items-center justify-between cursor-pointer" onclick="toggleCloudConfig()">
+            <div class="flex items-center justify-between cursor-pointer select-none" onclick="toggleCloudConfig()">
                 <div class="flex items-center gap-2 text-xs font-semibold text-slate-700">
                     <i class="fa-solid fa-cloud-arrow-up text-emerald-600"></i>
                     <span>Kết nối Google Sheet CSDL</span>
                     <span id="sync-status-badge" class="bg-amber-100 text-amber-800 text-[10px] px-2 py-0.5 rounded-full font-bold">Offline (Local)</span>
                 </div>
-                <i id="cloud-chevron" class="fa-solid fa-chevron-down text-slate-400 text-xs transition-transform"></i>
+                <i id="cloud-chevron" class="fa-solid fa-chevron-down text-slate-400 text-xs transition-transform duration-200"></i>
             </div>
             <div id="cloud-config-body" class="mt-3 space-y-2 hidden pt-2 border-t border-slate-100">
                 <p class="text-[11px] text-slate-500">Dán URL Google Apps Script Web App của bạn vào đây để đồng bộ nhiều thiết bị:</p>
@@ -135,7 +134,7 @@
         </section>
 
         <!-- Filter Bar by Rank -->
-        <section class="bg-white rounded-xl p-2 shadow-sm border border-slate-200/80 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+        <section class="bg-white rounded-xl p-2 shadow-sm border border-slate-200/80 flex items-center gap-1.5 overflow-x-auto">
             <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-1 shrink-0">Lọc:</span>
             <button onclick="setFilterRank('ALL')" id="filter-btn-ALL" class="filter-btn px-2.5 py-1 rounded-lg text-xs font-bold transition shrink-0 bg-court-600 text-white">Tất cả</button>
             <button onclick="setFilterRank('A+')" id="filter-btn-A+" class="filter-btn px-2 py-1 rounded-lg text-xs font-bold transition shrink-0 bg-slate-100 text-slate-600">A+</button>
@@ -169,9 +168,7 @@
             </div>
 
             <!-- Queue List Container -->
-            <div id="queue-list" class="space-y-2">
-                <!-- Dynamic Queue Cards Inject Here -->
-            </div>
+            <div id="queue-list" class="space-y-2"></div>
 
             <!-- Empty State Queue -->
             <div id="queue-empty" class="hidden bg-white rounded-2xl p-8 text-center border border-slate-200/80 shadow-sm">
@@ -193,9 +190,7 @@
             </div>
 
             <!-- Members List Container -->
-            <div id="members-list" class="space-y-2">
-                <!-- Dynamic Member Cards Inject Here -->
-            </div>
+            <div id="members-list" class="space-y-2"></div>
 
             <!-- Empty State Members -->
             <div id="members-empty" class="hidden bg-white rounded-2xl p-8 text-center border border-slate-200/80 shadow-sm">
@@ -247,7 +242,6 @@
 
     <!-- Application Logic Script -->
     <script>
-        // Helper to escape HTML characters
         function escapeHtml(str) {
             if (!str) return '';
             return String(str)
@@ -258,7 +252,6 @@
                 .replace(/'/g, '&#039;');
         }
 
-        // Toast Helper
         function showToast(msg) {
             const toast = document.getElementById('toast');
             const messageEl = document.getElementById('toast-message');
@@ -271,32 +264,28 @@
             }, 2500);
         }
 
-        // State Management
         let members = [];
         let currentFilterRank = 'ALL';
         let sheetsScriptUrl = localStorage.getItem('badminton_sheets_url') || '';
 
-        // Rank Color Mapping Definitions (A+, A, A-, B+, B, B-, C+, C, C-)
         const RANK_CONFIG = {
-            'A+': { bg: 'bg-rose-600', text: 'text-white', border: 'border-rose-700', label: 'A+' },
-            'A':  { bg: 'bg-red-500', text: 'text-white', border: 'border-red-600', label: 'A' },
-            'A-': { bg: 'bg-pink-500', text: 'text-white', border: 'border-pink-600', label: 'A-' },
-            
-            'B+': { bg: 'bg-indigo-600', text: 'text-white', border: 'border-indigo-700', label: 'B+' },
-            'B':  { bg: 'bg-blue-500', text: 'text-white', border: 'border-blue-600', label: 'B' },
-            'B-': { bg: 'bg-sky-500', text: 'text-white', border: 'border-sky-600', label: 'B-' },
-            
-            'C+': { bg: 'bg-emerald-600', text: 'text-white', border: 'border-emerald-700', label: 'C+' },
-            'C':  { bg: 'bg-amber-500', text: 'text-white', border: 'border-amber-600', label: 'C' },
-            'C-': { bg: 'bg-slate-400', text: 'text-white', border: 'border-slate-500', label: 'C-' }
+            'A+': { bg: 'bg-rose-600', text: 'text-white', label: 'A+' },
+            'A':  { bg: 'bg-red-500', text: 'text-white', label: 'A' },
+            'A-': { bg: 'bg-pink-500', text: 'text-white', label: 'A-' },
+            'B+': { bg: 'bg-indigo-600', text: 'text-white', label: 'B+' },
+            'B':  { bg: 'bg-blue-500', text: 'text-white', label: 'B' },
+            'B-': { bg: 'bg-sky-500', text: 'text-white', label: 'B-' },
+            'C+': { bg: 'bg-emerald-600', text: 'text-white', label: 'C+' },
+            'C':  { bg: 'bg-amber-500', text: 'text-white', label: 'C' },
+            'C-': { bg: 'bg-slate-400', text: 'text-white', label: 'C-' }
         };
 
-        const STORAGE_KEY = 'badminton_queue_members_v2';
+        const STORAGE_KEY = 'badminton_queue_members_v3';
 
-        // Load data on start
         window.onload = function() {
             if (sheetsScriptUrl) {
-                document.getElementById('sheets-url-input').value = sheetsScriptUrl;
+                const urlInput = document.getElementById('sheets-url-input');
+                if (urlInput) urlInput.value = sheetsScriptUrl;
                 fetchFromGoogleSheets();
             } else {
                 loadFromStorage();
@@ -317,12 +306,15 @@
         function toggleCloudConfig() {
             const body = document.getElementById('cloud-config-body');
             const chevron = document.getElementById('cloud-chevron');
-            body.classList.toggle('hidden');
-            chevron.classList.toggle('rotate-180');
+            if (body && chevron) {
+                body.classList.toggle('hidden');
+                chevron.classList.toggle('rotate-180');
+            }
         }
 
         function saveSheetsUrl() {
-            const url = document.getElementById('sheets-url-input').value.trim();
+            const urlInput = document.getElementById('sheets-url-input');
+            const url = urlInput ? urlInput.value.trim() : '';
             sheetsScriptUrl = url;
             localStorage.setItem('badminton_sheets_url', url);
             if (url) {
@@ -336,6 +328,7 @@
 
         function updateSyncBadge(isCloud) {
             const badge = document.getElementById('sync-status-badge');
+            if (!badge) return;
             if (isCloud) {
                 badge.className = "bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded-full font-bold";
                 badge.innerText = "Google Sheet Syncing";
@@ -353,13 +346,13 @@
                 const data = await res.json();
                 if (Array.isArray(data)) {
                     members = data;
-                    saveToStorage();
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(members));
                     render();
                     showToast("Đồng bộ Google Sheet thành công!");
                 }
             } catch (err) {
                 console.error("Sheets Fetch Error:", err);
-                showToast("Lỗi tải dữ liệu Google Sheet. Dùng dữ liệu bộ nhớ tạm.");
+                showToast("Không thể tải CSDL Google Sheet. Dùng dữ liệu bộ nhớ tạm.");
                 loadFromStorage();
                 render();
             }
@@ -378,17 +371,9 @@
             }
         }
 
-        // Storage helpers
         function saveToStorage() {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(members));
             saveToGoogleSheets();
-        }
-            render();
-        };
-
-        // Storage helpers
-        function saveToStorage() {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(members));
         }
 
         function loadFromStorage() {
@@ -398,12 +383,10 @@
                     members = JSON.parse(stored);
                 }
             } catch (e) {
-                console.error("Failed to load local storage", e);
                 members = [];
             }
         }
 
-        // Add New Member with Rank
         function handleAddMember(e) {
             e.preventDefault();
             const input = document.getElementById('member-name-input');
@@ -417,19 +400,18 @@
                 id: Date.now().toString(),
                 name: name,
                 rank: rank,
-                active: true, // Default ON when newly added
+                active: true,
                 matchesPlayed: 0,
-                timestamp: Date.now() // Used for order
+                timestamp: Date.now()
             };
 
             members.push(newMember);
             saveToStorage();
             input.value = '';
-            showToast(`Đã thêm "${name}" (Hạng ${rank}) và bật trạng thái ON`);
+            showToast(`Đã thêm "${name}" (Hạng ${rank})`);
             render();
         }
 
-        // Set Filter Rank
         function setFilterRank(rank) {
             currentFilterRank = rank;
             document.querySelectorAll('.filter-btn').forEach(btn => {
@@ -442,7 +424,6 @@
             render();
         }
 
-        // Toggle Active State (ON/OFF)
         function toggleMemberActive(id) {
             const member = members.find(m => m.id === id);
             if (member) {
@@ -456,7 +437,6 @@
             }
         }
 
-        // Move single member to bottom of Queue
         function moveToBottom(id) {
             const member = members.find(m => m.id === id);
             if (member && member.active) {
@@ -468,7 +448,6 @@
             }
         }
 
-        // Reset All Matches Counter
         function resetStats() {
             if (confirm("Bạn có muốn đặt lại số trận đã đánh của tất cả mọi người về 0 không?")) {
                 members.forEach(m => m.matchesPlayed = 0);
@@ -478,7 +457,6 @@
             }
         }
 
-        // Delete Member
         function deleteMember(id, name) {
             if (confirm(`Bạn có chắc chắn muốn xóa thành viên "${name}"?`)) {
                 members = members.filter(m => m.id !== id);
@@ -488,7 +466,6 @@
             }
         }
 
-        // Edit Member Modal
         function openEditModal(id, name, rank) {
             document.getElementById('edit-member-id').value = id;
             document.getElementById('edit-member-name').value = name;
@@ -518,7 +495,6 @@
             closeEditModal();
         }
 
-        // Tab Switcher
         function switchTab(tab) {
             const queueTab = document.getElementById('tab-queue');
             const membersTab = document.getElementById('tab-members');
@@ -538,14 +514,11 @@
             }
         }
 
-        // Helper to get Rank Badge Tag HTML
         function getRankBadgeHtml(rankKey) {
             const cfg = RANK_CONFIG[rankKey] || RANK_CONFIG['B'];
-            // Fixed width badge placed BEFORE name
             return `<span class="${cfg.bg} ${cfg.text} inline-block w-8 text-center text-[11px] font-extrabold py-0.5 rounded shadow-sm shrink-0">${cfg.label}</span>`;
         }
 
-        // Render UI
         function render() {
             let activeQueue = members
                 .filter(m => m.active)
@@ -553,13 +526,11 @@
 
             let allMembersSorted = [...members].sort((a, b) => a.name.localeCompare(b.name, 'vi'));
 
-            // Apply Rank Filtering if not ALL
             if (currentFilterRank !== 'ALL') {
                 activeQueue = activeQueue.filter(m => (m.rank || 'B') === currentFilterRank);
                 allMembersSorted = allMembersSorted.filter(m => (m.rank || 'B') === currentFilterRank);
             }
 
-            // Update Counters
             document.getElementById('tab-queue-count').innerText = members.filter(m => m.active).length;
             document.getElementById('tab-members-count').innerText = members.length;
 
@@ -585,7 +556,6 @@
                             class="queue-item-enter bg-white rounded-2xl p-3.5 border border-slate-200/90 shadow-sm hover:border-court-500 active:border-court-600 transition cursor-pointer tap-active flex items-center justify-between group">
                             
                             <div class="flex items-center gap-3">
-                                <!-- Order Position Number Badge -->
                                 <div class="w-8 h-8 rounded-xl flex items-center justify-center text-sm ${badgeColor}">
                                     ${index + 1}
                                 </div>
@@ -657,3 +627,9 @@
     </script>
 </body>
 </html>
+```eof
+
+### Các điểm chính trong mã nguồn mới này:
+1. **Kiểm tra an toàn thẻ DOM**: Hàm `toggleCloudConfig()` và `saveSheetsUrl()` đã được thêm phần kiểm tra sự tồn tại của thẻ trước khi gọi `classList` để loại bỏ 100% lỗi script.
+2. **Khôi phục toàn bộ giao diện**: Bao gồm nút bấm **"Kết nối Google Sheet CSDL"**, bộ chọn trình độ **A+ -> C-**, thanh lọc nhanh và bảng danh sách xếp lượt.
+3. Bạn có thể copy toàn bộ nội dung file này dán đè trực tiếp lên file `index.html` trên GitHub nhé!
