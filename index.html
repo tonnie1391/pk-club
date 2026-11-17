@@ -81,35 +81,25 @@
     </header>
 
     <main class="max-w-md mx-auto px-4 pt-4 space-y-4">
-
-        <!-- Cloud / Local Mode Toggle & Config Section -->
-        <section class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200/80">
-            <div class="flex items-center justify-between gap-2">
-                <div class="flex items-center gap-1 text-[11px] font-semibold text-slate-700 shrink-0">
-                    <i class="fa-solid fa-database text-court-600"></i>
-                    <span>Nguồn lưu dữ liệu:</span>
-                </div>
-                <!-- Toggle Mode Segmented Buttons -->
-                <div class="flex bg-slate-100 p-0.5 rounded-xl text-[11px] font-bold">
-                    <button id="mode-btn-local" onclick="switchStorageMode('local')" class="px-2.5 py-1 rounded-lg transition bg-white text-court-800 shadow-sm">
-                        Local
-                    </button>
-                    <button id="mode-btn-cloud" onclick="switchStorageMode('cloud')" class="px-2.5 py-1 rounded-lg transition text-slate-500 hover:text-slate-700">
-                        Cloud
-                    </button>
+        <!-- Nguồn dữ liệu & Nút chuyển đổi (Gọn gàng 1 dòng) -->
+        <section class="bg-white rounded-2xl p-2.5 shadow-sm border border-slate-200/80 flex items-center justify-between gap-2 text-xs">
+            <!-- Thông tin nguồn & trạng thái kết nối -->
+            <div class="flex items-center gap-1.5 min-w-0 flex-1">
+                <i class="fa-solid fa-database text-court-600 text-sm shrink-0"></i>
+                <div class="truncate text-[11px] font-semibold text-slate-700">
+                    <span>Nguồn: </span>
+                    <span id="storage-status-text" class="font-bold text-court-700">Bộ nhớ máy</span>
                 </div>
             </div>
 
-            <!-- Unified Fixed-Height Status Container -->
-            <div class="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] min-h-[26px]">
-                <div id="cloud-status-container" class="hidden w-full flex items-center justify-between">
-                    <span class="text-slate-500">Google Sheet:</span>
-                    <span id="sync-status-badge" class="bg-amber-100 text-amber-800 text-[10px] px-2 py-0.5 rounded-full font-bold">Chưa kết nối</span>
-                </div>
-                <div id="local-status-container" class="w-full flex items-center justify-between">
-                    <span class="text-slate-400 italic">Dữ liệu lưu trên thiết bị này</span>
-                    <span class="bg-slate-100 text-slate-600 text-[10px] px-2 py-0.5 rounded-full font-bold">Bộ nhớ máy</span>
-                </div>
+            <!-- 2 Nút bấm chọn chế độ -->
+            <div class="flex bg-slate-100 p-0.5 rounded-xl text-[11px] font-bold shrink-0">
+                <button id="mode-btn-local" onclick="switchStorageMode('local')" class="px-3 py-1 rounded-lg transition tap-active bg-white text-court-800 shadow-sm">
+                    Local
+                </button>
+                <button id="mode-btn-cloud" onclick="switchStorageMode('cloud')" class="px-3 py-1 rounded-lg transition tap-active text-slate-500 hover:text-slate-700">
+                    Cloud
+                </button>
             </div>
         </section>
 
