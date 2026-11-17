@@ -133,15 +133,16 @@
                 <div class="flex items-center gap-2">
                     <span class="text-xs text-slate-500 font-medium shrink-0"><i class="fa-solid fa-layer-group text-slate-400"></i> Trình độ:</span>
                     <select id="member-rank-input" class="w-full py-1.5 px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-court-500">
-                        <option value="A+">A+ (Đỉnh cao / Chuyên nghiệp)</option>
+                        <option value="A+">A+ (Chuyên nghiệp)</option>
                         <option value="A">A (Rất giỏi)</option>
                         <option value="A-">A- (Giỏi)</option>
                         <option value="B+" selected>B+ (Khá tốt)</option>
                         <option value="B">B (Trung bình khá)</option>
                         <option value="B-">B- (Trung bình)</option>
                         <option value="C+">C+ (Yếu khá)</option>
-                        <option value="C">C (Mới chơi / Yếu)</option>
+                        <option value="C">C (Mới chơi)</option>
                         <option value="C-">C- (Tập sự)</option>
+                        <option value="MANAGER">👑 Chủ nhiệm</option>
                     </select>
                 </div>
             </form>
@@ -319,6 +320,7 @@
                         <option value="C+">C+ (Yếu khá)</option>
                         <option value="C">C (Mới chơi)</option>
                         <option value="C-">C- (Tập sự)</option>
+                        <option value="MANAGER">👑 Chủ nhiệm</option>
                     </select>
                 </div>
             </div>
@@ -437,6 +439,8 @@
         }
 
         const RANK_CONFIG = {
+            'MANAGER': { bg: 'bg-amber-400', text: 'text-court-900', border: 'border-amber-500', label: '<i class="fa-solid fa-crown"></i>' },
+            
             'A+': { bg: 'bg-rose-600', text: 'text-white', border: 'border-rose-700', label: 'A+' },
             'A':  { bg: 'bg-red-500', text: 'text-white', border: 'border-red-600', label: 'A' },
             'A-': { bg: 'bg-pink-500', text: 'text-white', border: 'border-pink-600', label: 'A-' },
