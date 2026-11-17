@@ -928,8 +928,7 @@
                                     </div>
                                     <div class="text-[11px] text-slate-400 mt-0.5">
                                         <div>Trạng thái: <span class="${m.active ? 'text-emerald-600 font-semibold' : 'text-slate-400'}">${m.active ? 'Đã đến (ON)' : 'Vắng mặt (OFF)'}</span></div>
-                                        <div>Đã off: <span class="text-slate-600 font-medium">${m.lastOnline || 'Chưa rõ'}</span></div>
-                                    </div>
+                                        <div>Đã OFF: <span class="text-slate-600 font-medium">${m.lastOnline || 'Chưa rõ'}</span> ${!m.active && m.lastOnlineTimestamp ? `<span class="text-amber-600 font-bold">(${getOffDurationText(m.lastOnlineTimestamp)})</span>` : ''}</div>                                    </div>
                                 </div>
                             </div>
 
