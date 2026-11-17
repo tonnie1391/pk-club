@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Quản Lý Lượt Vào Sân Cầu Lông</title>
+    <title>PK Club - Quản Lý Thành Viên Và Xếp Lượt</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -34,7 +34,6 @@
         }
     </script>
     <style>
-        /* Touch feedback & smooth transitions */
         .tap-active:active {
             transform: scale(0.97);
         }
@@ -45,8 +44,8 @@
             from { opacity: 0; transform: translateY(-8px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        /* Custom Scrollbar */
         ::-webkit-scrollbar {
+            height: 4px;
             width: 6px;
         }
         ::-webkit-scrollbar-track {
@@ -68,13 +67,25 @@
                     <i class="fa-solid fa-shuttlecock text-lg"></i>
                 </div>
                 <div>
-                    <h1 class="font-bold text-lg leading-tight">Sân Cầu Lông</h1>
-                    <p class="text-xs text-court-100 opacity-90">Xếp lượt & Chia trận công bằng</p>
+                    <h1 class="font-bold text-lg leading-tight">PK Club</h1>
+                    <p class="text-xs text-court-100 opacity-90">Quản lý thành viên và xếp lượt</p>
                 </div>
             </div>
-            <button onclick="resetStats()" class="text-xs bg-court-700 hover:bg-court-600 active:bg-court-800 px-3 py-1.5 rounded-lg border border-court-500/30 transition flex items-center gap-1.5">
-                <i class="fa-solid fa-rotate-left"></i> Reset Trận
-            </button>
+            
+            <!-- Header Right Admin Controls -->
+            <div class="flex items-center gap-1.5">
+                <div id="admin-header-actions" class="hidden flex items-center gap-1.5">
+                    <button onclick="resetStats()" title="Reset Số Trận" class="bg-court-700 hover:bg-court-600 active:bg-court-800 text-white p-2 rounded-lg border border-court-500/30 transition flex items-center justify-center text-xs">
+                        <i class="fa-solid fa-rotate-left"></i>
+                    </button>
+                    <button onclick="logoutAdmin()" class="bg-red-600/80 hover:bg-red-600 active:bg-red-700 text-white px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1">
+                        <i class="fa-solid fa-right-from-bracket"></i> Thoát
+                    </button>
+                </div>
+                <button id="login-header-btn" onclick="openLoginModal()" class="bg-amber-500 hover:bg-amber-600 text-court-900 px-3 py-1.5 rounded-lg font-bold text-xs shadow-sm transition flex items-center gap-1">
+                    <i class="fa-solid fa-key text-xs"></i> Đăng nhập
+                </button>
+            </div>
         </div>
     </header>
 
@@ -83,37 +94,35 @@
         <!-- Cloud / Local Mode Toggle & Config Section -->
         <section class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200/80">
             <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                <div class="flex items-center gap-1 text-[11px] font-semibold text-slate-700 shrink-0">
                     <i class="fa-solid fa-database text-court-600"></i>
                     <span>Nguồn lưu dữ liệu:</span>
                 </div>
-                <!-- Toggle Mode Segmented Buttons -->
-                <div class="flex bg-slate-100 p-0.5 rounded-xl text-xs font-bold">
-                    <button id="mode-btn-local" onclick="switchStorageMode('local')" class="px-3 py-1 rounded-lg transition bg-white text-court-800 shadow-sm">
-                        <i class="fa-solid fa-mobile-screen mr-1"></i> Local
+                <div class="flex bg-slate-100 p-0.5 rounded-xl text-[11px] font-bold shrink-0">
+                    <button id="mode-btn-local" onclick="switchStorageMode('local')" class="w-16 py-1 rounded-lg transition bg-white text-court-800 shadow-sm text-center">
+                        Local
                     </button>
-                    <button id="mode-btn-cloud" onclick="switchStorageMode('cloud')" class="px-3 py-1 rounded-lg transition text-slate-500 hover:text-slate-700">
-                        <i class="fa-solid fa-cloud mr-1"></i> Cloud (Sheet)
+                    <button id="mode-btn-cloud" onclick="switchStorageMode('cloud')" class="w-16 py-1 rounded-lg transition text-slate-500 hover:text-slate-700 text-center">
+                        Cloud
                     </button>
                 </div>
             </div>
 
-            <!-- Cloud Settings Section (Visible only in Cloud mode) -->
-            <div id="cloud-config-body" class="mt-3 space-y-2 hidden pt-2 border-t border-slate-100">
-                <div class="flex items-center justify-between text-[11px] text-slate-500">
-                    <span>URL Google Apps Script Web App:</span>
-                    <span id="sync-status-badge" class="bg-amber-100 text-amber-800 text-[10px] px-2 py-0.5 rounded-full font-bold">Chưa kết nối</span>
+            <!-- Equal Size Status Container -->
+            <div class="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] h-6">
+                <div id="status-local-box" class="w-full flex items-center justify-between">
+                    <span class="text-slate-400 font-medium">Trạng thái:</span>
+                    <span class="bg-slate-100 text-slate-600 text-[10px] px-2 py-0.5 rounded-full font-bold">Dữ liệu không lưu vào đám mây</span>
                 </div>
-                <div class="flex gap-2">
-                    <input type="text" id="sheets-url-input" placeholder="https://script.google.com/macros/s/.../exec" 
-                        class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-court-500 outline-none">
-                    <button onclick="saveSheetsUrl()" class="bg-court-600 hover:bg-court-700 text-white px-3 py-2 rounded-xl text-xs font-bold shrink-0">Lưu URL</button>
+                <div id="status-cloud-box" class="w-full flex items-center justify-between hidden">
+                    <span class="text-slate-400 font-medium">Kết nối Sheet:</span>
+                    <span id="sync-status-badge" class="bg-amber-100 text-amber-800 text-[10px] px-2 py-0.5 rounded-full font-bold">Chưa kết nối</span>
                 </div>
             </div>
         </section>
 
-        <!-- Input Section: Add New Member -->
-        <section class="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-200/80">
+        <!-- Input Section: Add New Member (Admin Only) -->
+        <section id="admin-add-section" class="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-200/80 hidden">
             <form id="add-member-form" onsubmit="handleAddMember(event)" class="space-y-2.5">
                 <div class="flex gap-2">
                     <div class="relative flex-1">
@@ -128,7 +137,6 @@
                         <i class="fa-solid fa-plus"></i> Thêm
                     </button>
                 </div>
-                <!-- Rank Selection for New Member -->
                 <div class="flex items-center gap-2">
                     <span class="text-xs text-slate-500 font-medium shrink-0"><i class="fa-solid fa-layer-group text-slate-400"></i> Trình độ:</span>
                     <select id="member-rank-input" class="w-full py-1.5 px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-court-500">
@@ -147,7 +155,7 @@
         </section>
 
         <!-- Filter Bar by Rank -->
-        <section class="bg-white rounded-xl p-2 shadow-sm border border-slate-200/80 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+        <section class="bg-white rounded-xl p-2 shadow-sm border border-slate-200/80 flex items-center gap-1.5 overflow-x-auto">
             <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-1 shrink-0">Lọc:</span>
             <button onclick="setFilterRank('ALL')" id="filter-btn-ALL" class="filter-btn px-2.5 py-1 rounded-lg text-xs font-bold transition shrink-0 bg-court-600 text-white">Tất cả</button>
             <button onclick="setFilterRank('A+')" id="filter-btn-A+" class="filter-btn px-2 py-1 rounded-lg text-xs font-bold transition shrink-0 bg-slate-100 text-slate-600">A+</button>
@@ -171,19 +179,17 @@
             </button>
         </div>
 
-        <!-- TAB 1: ACTIVE QUEUE (TOP PRIORITIES FIRST) -->
+        <!-- TAB 1: ACTIVE QUEUE -->
         <section id="tab-queue" class="space-y-2">
             <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-xs text-emerald-800 flex items-start gap-2">
                 <i class="fa-solid fa-circle-info text-emerald-600 mt-0.5 text-sm"></i>
                 <div>
-                    <strong>Mẹo xếp sân:</strong> Người ở <strong>đầu danh sách (#1)</strong> sẽ đánh trước. Khi đánh xong, chạm vào tên người đó để đưa họ <strong>xuống cuối danh sách</strong>.
+                    <strong>Mẹo xếp sân:</strong> Người ở <strong>đầu danh sách (#1)</strong> sẽ đánh trước. Khi đánh xong, Admin chạm vào tên người đó để đưa họ <strong>xuống cuối danh sách</strong>.
                 </div>
             </div>
 
             <!-- Queue List Container -->
-            <div id="queue-list" class="space-y-2">
-                <!-- Dynamic Queue Cards Inject Here -->
-            </div>
+            <div id="queue-list" class="space-y-2"></div>
 
             <!-- Empty State Queue -->
             <div id="queue-empty" class="hidden bg-white rounded-2xl p-8 text-center border border-slate-200/80 shadow-sm">
@@ -195,7 +201,7 @@
             </div>
         </section>
 
-        <!-- TAB 2: MEMBERS MANAGEMENT (ON/OFF LIST) -->
+        <!-- TAB 2: MEMBERS MANAGEMENT -->
         <section id="tab-members" class="space-y-2 hidden">
             <div class="bg-blue-50 border border-blue-200 rounded-xl p-3 text-xs text-blue-800 flex items-start gap-2">
                 <i class="fa-solid fa-circle-info text-blue-600 mt-0.5 text-sm"></i>
@@ -205,9 +211,7 @@
             </div>
 
             <!-- Members List Container -->
-            <div id="members-list" class="space-y-2">
-                <!-- Dynamic Member Cards Inject Here -->
-            </div>
+            <div id="members-list" class="space-y-2"></div>
 
             <!-- Empty State Members -->
             <div id="members-empty" class="hidden bg-white rounded-2xl p-8 text-center border border-slate-200/80 shadow-sm">
@@ -225,6 +229,26 @@
     <div id="toast" class="fixed bottom-4 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs px-4 py-2.5 rounded-full shadow-lg transition-all duration-300 opacity-0 pointer-events-none z-50 flex items-center gap-2">
         <i class="fa-solid fa-circle-check text-emerald-400"></i>
         <span id="toast-message">Thông báo</span>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="login-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-5 w-full max-w-xs shadow-xl space-y-4">
+            <div class="text-center">
+                <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-2 text-xl font-bold">
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+                <h3 class="font-bold text-slate-800 text-base">Đăng Nhập Quản Trị</h3>
+                <p class="text-xs text-slate-400">Nhập mật khẩu Admin để quản lý</p>
+            </div>
+            <div>
+                <input type="password" id="admin-pass-input" placeholder="Mật khẩu Admin..." class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-court-500 outline-none text-center">
+            </div>
+            <div class="flex justify-end gap-2">
+                <button onclick="closeLoginModal()" class="w-1/2 py-2 rounded-xl bg-slate-100 text-slate-600 text-xs font-bold">Hủy</button>
+                <button onclick="submitAdminLogin()" class="w-1/2 py-2 rounded-xl bg-court-600 text-white text-xs font-bold shadow-sm">Xác nhận</button>
+            </div>
+        </div>
     </div>
 
     <!-- Edit Name & Rank Modal -->
@@ -259,7 +283,6 @@
 
     <!-- Application Logic Script -->
     <script>
-        // Helper to escape HTML characters
         function escapeHtml(str) {
             if (!str) return '';
             return String(str)
@@ -270,7 +293,6 @@
                 .replace(/'/g, '&#039;');
         }
 
-        // Toast Helper
         function showToast(msg) {
             const toast = document.getElementById('toast');
             const messageEl = document.getElementById('toast-message');
@@ -283,39 +305,33 @@
             }, 2500);
         }
 
-        // Default Google Apps Script URL integrated directly in code
-        // HÃY DÁN LINK WEB APP CỦA BẠN VÀO DÒNG DƯỚI ĐÂY:
-        const DEFAULT_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbwt1Vk6vsJIO0wOQWY3H3J2-54mg0GxTbjZZBQGhhuTE-CJbgMLY9OvYUXDuGO4aSQAmQ/exec';
+        // Configuration
+        const DEFAULT_SHEETS_URL = 'DÁN_LINK_GOOGLE_SCRIPT_TẠI_ĐÂY';
+        const ADMIN_PASSWORD = '123456';
 
         // State Management
         let members = [];
         let currentFilterRank = 'ALL';
-        let storageMode = localStorage.getItem('badminton_storage_mode') || 'local'; // 'local' or 'cloud'
+        let storageMode = localStorage.getItem('badminton_storage_mode') || 'local';
         let sheetsScriptUrl = localStorage.getItem('badminton_sheets_url') || DEFAULT_SHEETS_URL;
+        let isAdmin = localStorage.getItem('badminton_is_admin') === 'true';
 
-        // Rank Color Mapping Definitions (A+, A, A-, B+, B, B-, C+, C, C-)
         const RANK_CONFIG = {
-            'A+': { bg: 'bg-rose-600', text: 'text-white', border: 'border-rose-700', label: 'A+' },
-            'A':  { bg: 'bg-red-500', text: 'text-white', border: 'border-red-600', label: 'A' },
-            'A-': { bg: 'bg-pink-500', text: 'text-white', border: 'border-pink-600', label: 'A-' },
-            
-            'B+': { bg: 'bg-indigo-600', text: 'text-white', border: 'border-indigo-700', label: 'B+' },
-            'B':  { bg: 'bg-blue-500', text: 'text-white', border: 'border-blue-600', label: 'B' },
-            'B-': { bg: 'bg-sky-500', text: 'text-white', border: 'border-sky-600', label: 'B-' },
-            
-            'C+': { bg: 'bg-emerald-600', text: 'text-white', border: 'border-emerald-700', label: 'C+' },
-            'C':  { bg: 'bg-amber-500', text: 'text-white', border: 'border-amber-600', label: 'C' },
-            'C-': { bg: 'bg-slate-400', text: 'text-white', border: 'border-slate-500', label: 'C-' }
+            'A+': { bg: 'bg-rose-600', text: 'text-white', label: 'A+' },
+            'A':  { bg: 'bg-red-500', text: 'text-white', label: 'A' },
+            'A-': { bg: 'bg-pink-500', text: 'text-white', label: 'A-' },
+            'B+': { bg: 'bg-indigo-600', text: 'text-white', label: 'B+' },
+            'B':  { bg: 'bg-blue-500', text: 'text-white', label: 'B' },
+            'B-': { bg: 'bg-sky-500', text: 'text-white', label: 'B-' },
+            'C+': { bg: 'bg-emerald-600', text: 'text-white', label: 'C+' },
+            'C':  { bg: 'bg-amber-500', text: 'text-white', label: 'C' },
+            'C-': { bg: 'bg-slate-400', text: 'text-white', label: 'C-' }
         };
 
-        const STORAGE_KEY = 'badminton_queue_members_v2';
+        const STORAGE_KEY = 'badminton_queue_members_v3';
 
-        // Load data on start
         window.onload = function() {
-            const urlInput = document.getElementById('sheets-url-input');
-            if (urlInput) urlInput.value = (sheetsScriptUrl !== 'DÁN_LINK_GOOGLE_SCRIPT_TẠI_ĐÂY') ? sheetsScriptUrl : '';
-
-            // Initialize mode UI
+            applyAdminUI();
             applyStorageModeUI();
 
             if (storageMode === 'cloud' && sheetsScriptUrl && sheetsScriptUrl !== 'DÁN_LINK_GOOGLE_SCRIPT_TẠI_ĐÂY') {
@@ -336,20 +352,74 @@
             }
         };
 
+        // Admin Auth Logic
+        function openLoginModal() {
+            document.getElementById('login-modal').classList.remove('hidden');
+            document.getElementById('admin-pass-input').value = '';
+            document.getElementById('admin-pass-input').focus();
+        }
+
+        function closeLoginModal() {
+            document.getElementById('login-modal').classList.add('hidden');
+        }
+
+        function submitAdminLogin() {
+            const pass = document.getElementById('admin-pass-input').value;
+            if (pass === ADMIN_PASSWORD) {
+                isAdmin = true;
+                localStorage.setItem('badminton_is_admin', 'true');
+                closeLoginModal();
+                applyAdminUI();
+                render();
+                showToast("Đã đăng nhập quyền Admin!");
+            } else {
+                showToast("Mật khẩu không chính xác!");
+            }
+        }
+
+        function logoutAdmin() {
+            isAdmin = false;
+            localStorage.setItem('badminton_is_admin', 'false');
+            applyAdminUI();
+            render();
+            showToast("Đã thoát quyền Admin");
+        }
+
+        function applyAdminUI() {
+            const addSec = document.getElementById('admin-add-section');
+            const adminActions = document.getElementById('admin-header-actions');
+            const loginBtn = document.getElementById('login-header-btn');
+
+            if (isAdmin) {
+                addSec.classList.remove('hidden');
+                adminActions.classList.remove('hidden');
+                loginBtn.classList.add('hidden');
+            } else {
+                addSec.classList.add('hidden');
+                adminActions.classList.add('hidden');
+                loginBtn.classList.remove('hidden');
+            }
+        }
+
+        // Storage Mode Switcher
         function switchStorageMode(mode) {
+            if (!isAdmin) {
+                showToast("Vui lòng đăng nhập Admin để đổi nguồn lưu!");
+                return;
+            }
             storageMode = mode;
             localStorage.setItem('badminton_storage_mode', mode);
             applyStorageModeUI();
 
             if (mode === 'cloud') {
-                showToast("Đã chuyển sang chế độ Cloud (Google Sheet)");
+                showToast("Đã chuyển sang chế độ Cloud");
                 if (sheetsScriptUrl && sheetsScriptUrl !== 'DÁN_LINK_GOOGLE_SCRIPT_TẠI_ĐÂY') {
                     fetchFromGoogleSheets();
                 } else {
                     updateSyncBadge(false);
                 }
             } else {
-                showToast("Đã chuyển sang chế độ Local (Lưu trên máy)");
+                showToast("Đã chuyển sang chế độ Local");
                 loadFromStorage();
                 render();
             }
@@ -358,30 +428,19 @@
         function applyStorageModeUI() {
             const btnLocal = document.getElementById('mode-btn-local');
             const btnCloud = document.getElementById('mode-btn-cloud');
-            const cloudBody = document.getElementById('cloud-config-body');
+            const boxLocal = document.getElementById('status-local-box');
+            const boxCloud = document.getElementById('status-cloud-box');
 
             if (storageMode === 'cloud') {
-                btnCloud.className = "px-3 py-1 rounded-lg transition bg-court-600 text-white shadow-sm";
-                btnLocal.className = "px-3 py-1 rounded-lg transition text-slate-500 hover:text-slate-700";
-                cloudBody.classList.remove('hidden');
+                btnCloud.className = "w-16 py-1 rounded-lg transition bg-court-600 text-white shadow-sm text-center";
+                btnLocal.className = "w-16 py-1 rounded-lg transition text-slate-500 hover:text-slate-700 text-center";
+                boxCloud.classList.remove('hidden');
+                boxLocal.classList.add('hidden');
             } else {
-                btnLocal.className = "px-3 py-1 rounded-lg transition bg-white text-court-800 shadow-sm";
-                btnCloud.className = "px-3 py-1 rounded-lg transition text-slate-500 hover:text-slate-700";
-                cloudBody.classList.add('hidden');
-            }
-        }
-
-        function saveSheetsUrl() {
-            const urlInput = document.getElementById('sheets-url-input');
-            const url = urlInput ? urlInput.value.trim() : '';
-            sheetsScriptUrl = url;
-            localStorage.setItem('badminton_sheets_url', url);
-            if (url) {
-                showToast("Đã lưu URL! Đang kết nối Google Sheet...");
-                fetchFromGoogleSheets();
-            } else {
-                updateSyncBadge(false);
-                showToast("Vui lòng nhập URL hợp lệ.");
+                btnLocal.className = "w-16 py-1 rounded-lg transition bg-white text-court-800 shadow-sm text-center";
+                btnCloud.className = "w-16 py-1 rounded-lg transition text-slate-500 hover:text-slate-700 text-center";
+                boxLocal.classList.remove('hidden');
+                boxCloud.classList.add('hidden');
             }
         }
 
@@ -393,12 +452,12 @@
                 badge.innerText = "Google Sheet Syncing";
             } else {
                 badge.className = "bg-amber-100 text-amber-800 text-[10px] px-2 py-0.5 rounded-full font-bold";
-                badge.innerText = "Lỗi / Chưa kết nối";
+                badge.innerText = "Chưa kết nối / Lỗi";
             }
         }
 
         async function fetchFromGoogleSheets() {
-            if (storageMode !== 'cloud' || !sheetsScriptUrl) return;
+            if (storageMode !== 'cloud' || !sheetsScriptUrl || sheetsScriptUrl === 'DÁN_LINK_GOOGLE_SCRIPT_TẠI_ĐÂY') return;
             try {
                 updateSyncBadge(true);
                 const res = await fetch(sheetsScriptUrl);
@@ -412,14 +471,13 @@
             } catch (err) {
                 console.error("Sheets Fetch Error:", err);
                 updateSyncBadge(false);
-                showToast("Lỗi tải Google Sheet. Chuyển tạm về Local.");
                 loadFromStorage();
                 render();
             }
         }
 
         async function saveToGoogleSheets() {
-            if (storageMode !== 'cloud' || !sheetsScriptUrl) return;
+            if (storageMode !== 'cloud' || !sheetsScriptUrl || sheetsScriptUrl === 'DÁN_LINK_GOOGLE_SCRIPT_TẠI_ĐÂY') return;
             try {
                 await fetch(sheetsScriptUrl, {
                     method: 'POST',
@@ -431,7 +489,6 @@
             }
         }
 
-        // Storage helpers
         function saveToStorage() {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(members));
             if (storageMode === 'cloud') {
@@ -446,14 +503,13 @@
                     members = JSON.parse(stored);
                 }
             } catch (e) {
-                console.error("Failed to load local storage", e);
                 members = [];
             }
         }
 
-        // Add New Member with Rank
         function handleAddMember(e) {
             e.preventDefault();
+            if (!isAdmin) return;
             const input = document.getElementById('member-name-input');
             const rankInput = document.getElementById('member-rank-input');
             const name = input.value.trim();
@@ -465,19 +521,18 @@
                 id: Date.now().toString(),
                 name: name,
                 rank: rank,
-                active: true, // Default ON when newly added
+                active: true,
                 matchesPlayed: 0,
-                timestamp: Date.now() // Used for order
+                timestamp: Date.now()
             };
 
             members.push(newMember);
             saveToStorage();
             input.value = '';
-            showToast(`Đã thêm "${name}" (Hạng ${rank}) và bật trạng thái ON`);
+            showToast(`Đã thêm "${name}" (Hạng ${rank})`);
             render();
         }
 
-        // Set Filter Rank
         function setFilterRank(rank) {
             currentFilterRank = rank;
             document.querySelectorAll('.filter-btn').forEach(btn => {
@@ -490,8 +545,11 @@
             render();
         }
 
-        // Toggle Active State (ON/OFF)
         function toggleMemberActive(id) {
+            if (!isAdmin) {
+                showToast("Vui lòng đăng nhập Admin để thao tác!");
+                return;
+            }
             const member = members.find(m => m.id === id);
             if (member) {
                 member.active = !member.active;
@@ -504,8 +562,11 @@
             }
         }
 
-        // Move single member to bottom of Queue
         function moveToBottom(id) {
+            if (!isAdmin) {
+                showToast("Vui lòng đăng nhập Admin để xếp lượt!");
+                return;
+            }
             const member = members.find(m => m.id === id);
             if (member && member.active) {
                 member.timestamp = Date.now();
@@ -516,8 +577,8 @@
             }
         }
 
-        // Reset All Matches Counter
         function resetStats() {
+            if (!isAdmin) return;
             if (confirm("Bạn có muốn đặt lại số trận đã đánh của tất cả mọi người về 0 không?")) {
                 members.forEach(m => m.matchesPlayed = 0);
                 saveToStorage();
@@ -526,8 +587,8 @@
             }
         }
 
-        // Delete Member
         function deleteMember(id, name) {
+            if (!isAdmin) return;
             if (confirm(`Bạn có chắc chắn muốn xóa thành viên "${name}"?`)) {
                 members = members.filter(m => m.id !== id);
                 saveToStorage();
@@ -536,8 +597,8 @@
             }
         }
 
-        // Edit Member Modal
         function openEditModal(id, name, rank) {
+            if (!isAdmin) return;
             document.getElementById('edit-member-id').value = id;
             document.getElementById('edit-member-name').value = name;
             document.getElementById('edit-member-rank').value = rank || 'B';
@@ -549,6 +610,7 @@
         }
 
         function saveMemberName() {
+            if (!isAdmin) return;
             const id = document.getElementById('edit-member-id').value;
             const newName = document.getElementById('edit-member-name').value.trim();
             const newRank = document.getElementById('edit-member-rank').value;
@@ -566,7 +628,6 @@
             closeEditModal();
         }
 
-        // Tab Switcher
         function switchTab(tab) {
             const queueTab = document.getElementById('tab-queue');
             const membersTab = document.getElementById('tab-members');
@@ -586,14 +647,11 @@
             }
         }
 
-        // Helper to get Rank Badge Tag HTML
         function getRankBadgeHtml(rankKey) {
             const cfg = RANK_CONFIG[rankKey] || RANK_CONFIG['B'];
-            // Fixed width badge placed BEFORE name
             return `<span class="${cfg.bg} ${cfg.text} inline-block w-8 text-center text-[11px] font-extrabold py-0.5 rounded shadow-sm shrink-0">${cfg.label}</span>`;
         }
 
-        // Render UI
         function render() {
             let activeQueue = members
                 .filter(m => m.active)
@@ -601,13 +659,11 @@
 
             let allMembersSorted = [...members].sort((a, b) => a.name.localeCompare(b.name, 'vi'));
 
-            // Apply Rank Filtering if not ALL
             if (currentFilterRank !== 'ALL') {
                 activeQueue = activeQueue.filter(m => (m.rank || 'B') === currentFilterRank);
                 allMembersSorted = allMembersSorted.filter(m => (m.rank || 'B') === currentFilterRank);
             }
 
-            // Update Counters
             document.getElementById('tab-queue-count').innerText = members.filter(m => m.active).length;
             document.getElementById('tab-members-count').innerText = members.length;
 
@@ -629,11 +685,10 @@
                     else if (isNextInLine) badgeColor = "bg-emerald-100 text-emerald-800 font-bold border-emerald-200";
 
                     return `
-                        <div onclick="moveToBottom('${m.id}')" 
-                            class="queue-item-enter bg-white rounded-2xl p-3.5 border border-slate-200/90 shadow-sm hover:border-court-500 active:border-court-600 transition cursor-pointer tap-active flex items-center justify-between group">
+                        <div ${isAdmin ? `onclick="moveToBottom('${m.id}')"` : ''} 
+                            class="queue-item-enter bg-white rounded-2xl p-3.5 border border-slate-200/90 shadow-sm ${isAdmin ? 'hover:border-court-500 active:border-court-600 cursor-pointer tap-active' : ''} flex items-center justify-between group">
                             
                             <div class="flex items-center gap-3">
-                                <!-- Order Position Number Badge -->
                                 <div class="w-8 h-8 rounded-xl flex items-center justify-center text-sm ${badgeColor}">
                                     ${index + 1}
                                 </div>
@@ -649,11 +704,12 @@
                                 </div>
                             </div>
 
+                            ${isAdmin ? `
                             <div class="flex items-center gap-2">
                                 <span class="text-[11px] font-medium text-slate-400 group-hover:text-court-600 transition flex items-center gap-1">
                                     Xuống cuối <i class="fa-solid fa-arrow-down-long"></i>
                                 </span>
-                            </div>
+                            </div>` : ''}
                         </div>
                     `;
                 }).join('');
@@ -672,8 +728,8 @@
                     return `
                         <div class="bg-white rounded-2xl p-3.5 border border-slate-200/90 shadow-sm flex items-center justify-between">
                             <div class="flex items-center gap-3">
-                                <button onclick="toggleMemberActive('${m.id}')" 
-                                    class="w-12 h-6 rounded-full transition-colors relative focus:outline-none ${m.active ? 'bg-court-600' : 'bg-slate-300'}">
+                                <button ${isAdmin ? `onclick="toggleMemberActive('${m.id}')"` : 'disabled'} 
+                                    class="w-12 h-6 rounded-full transition-colors relative focus:outline-none ${m.active ? 'bg-court-600' : 'bg-slate-300'} ${!isAdmin ? 'opacity-70 cursor-not-allowed' : ''}">
                                     <div class="w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform ${m.active ? 'translate-x-6' : 'translate-x-0.5'} shadow-md flex items-center justify-center text-[10px]">
                                         ${m.active ? '<i class="fa-solid fa-check text-court-600"></i>' : ''}
                                     </div>
@@ -689,6 +745,7 @@
                                 </div>
                             </div>
 
+                            ${isAdmin ? `
                             <div class="flex items-center gap-1">
                                 <button onclick="openEditModal('${m.id}', '${escapeHtml(m.name)}', '${m.rank || 'B'}')" class="p-2 text-slate-400 hover:text-court-600 rounded-lg hover:bg-slate-50 transition">
                                     <i class="fa-solid fa-pen text-xs"></i>
@@ -696,7 +753,7 @@
                                 <button onclick="deleteMember('${m.id}', '${escapeHtml(m.name)}')" class="p-2 text-slate-400 hover:text-red-500 rounded-lg hover:bg-slate-50 transition">
                                     <i class="fa-solid fa-trash text-xs"></i>
                                 </button>
-                            </div>
+                            </div>` : ''}
                         </div>
                     `;
                 }).join('');
@@ -705,3 +762,6 @@
     </script>
 </body>
 </html>
+```eof
+
+Bạn có thể thay toàn bộ nội dung file `index.html` cũ bằng file mới này trên GitHub để kiểm tra lại nhé!
