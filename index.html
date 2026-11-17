@@ -621,10 +621,14 @@
         function formatLastOnline(timestamp) {
             if (!timestamp) return 'Chưa rõ';
             const date = new Date(Number(timestamp));
-            return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')} ${date.getDate()}/${date.getMonth() + 1}`;
+            const hours = date.getHours().toString().padStart(2, '0');
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+            const day = date.getDate().toString().padStart(2, '0');
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            return `${hours}:${minutes} ${day}/${month}`;
         }
         
-        // Add New Member with Rank (Cho phép Local không cần Admin, Cloud cần Admin)
+        // Thêm thành viên mới
         function handleAddMember(e) {
             e.preventDefault();
             if (storageMode === 'cloud' && !isAdmin) {
@@ -638,14 +642,15 @@
             
             if (!name) return;
 
+            const now = Date.now();
             const newMember = {
-                id: Date.now().toString(),
+                id: now.toString(),
                 name: name,
                 rank: rank,
                 active: true,
                 matchesPlayed: 0,
-                timestamp: Date.now(),
-                lastOnline: formatLastOnline(Date.now())
+                timestamp: now,
+                lastOnline: 'Đang ở sân' // Ban đầu thêm vào là ON
             };
 
             members.push(newMember);
@@ -668,22 +673,28 @@
             render();
         }
 
-        // Toggle Active State (ON/OFF)
+        // Toggle Active State (ON/OFF) - Đã sửa logic ghi nhận thời gian khi vừa OFF
         function toggleMemberActive(id) {
-            // Nếu dùng Cloud mà chưa đăng nhập Admin thì chặn
             if (storageMode === 'cloud' && !isAdmin) {
                 showToast("Chế độ Cloud yêu cầu quyền Admin để thay đổi ON/OFF!");
                 return;
             }
             const member = members.find(m => m.id === id);
             if (member) {
+                const now = Date.now();
                 member.active = !member.active;
+
                 if (member.active) {
-                    member.timestamp = Date.now();
-                    member.lastOnline = formatLastOnline(Date.now());
+                    // Khi vừa bật ON: Reset mốc thời gian xếp sân
+                    member.timestamp = now;
+                    showToast(`${member.name}: Đã ON (Đã đến sân)`);
+                } else {
+                    // Khi vừa tắt OFF: Lập tức ghi nhận ngay thời gian rời sân/lần cuối trực tuyến
+                    member.lastOnline = formatLastOnline(now);
+                    showToast(`${member.name}: Đã OFF (Đã ra về lúc ${member.lastOnline})`);
                 }
+
                 saveToStorage();
-                showToast(`${member.name}: ${member.active ? 'Đã ON (Có mặt)' : 'Đã OFF (Vắng)'}`);
                 render();
             }
         }
