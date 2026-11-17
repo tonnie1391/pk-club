@@ -178,7 +178,7 @@
             <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-xs text-emerald-800 flex items-start gap-2">
                 <i class="fa-solid fa-circle-info text-emerald-600 mt-0.5 text-sm"></i>
                 <div>
-                    <strong>Mẹo xếp sân:</strong> Người ở <strong>đầu danh sách (#1)</strong> sẽ đánh trước. Khi đánh xong, chạm vào tên người đó để đưa họ <strong>xuống cuối danh sách</strong>.
+                    <strong>Mẹo:</strong> Chạm vào tên người dùng để đưa họ <strong>xuống cuối danh sách</strong>.
                 </div>
             </div>
 
@@ -206,6 +206,15 @@
                 </div>
             </div>
 
+            <!-- Search Bar for Members -->
+            <div class="relative">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                    <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                </span>
+                <input type="text" id="member-search-input" oninput="render()" placeholder="Tìm kiếm nhanh tên thành viên..." 
+                    class="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-court-500 shadow-sm transition">
+            </div>
+            
             <!-- Members List Container -->
             <div id="members-list" class="space-y-2">
                 <!-- Dynamic Member Cards Inject Here -->
