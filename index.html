@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Quản Lý Lượt Vào Sân Cầu Lông</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Font Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        court: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            800: '#166534',
+                            900: '#14532d',
+                            dark: '#0a2e18'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Touch feedback & smooth transitions */
+        .tap-active:active {
+            transform: scale(0.97);
+        }
+        .queue-item-enter {
+            animation: fadeIn 0.3s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #16a34a;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen pb-12 select-none">
+
+    <!-- Header Navigation -->
+    <header class="bg-gradient-to-r from-court-900 via-court-800 to-court-900 text-white sticky top-0 z-50 shadow-md">
+        <div class="max-w-md mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-2.5">
+                <div class="bg-amber-400 text-court-900 p-2 rounded-xl flex items-center justify-center font-bold shadow-sm">
+                    <i class="fa-solid fa-shuttlecock text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight">Sân Cầu Lông</h1>
+                    <p class="text-xs text-court-100 opacity-90">Xếp lượt & Chia trận công bằng</p>
+                </div>
+            </div>
+            <button onclick="resetStats()" class="text-xs bg-court-700 hover:bg-court-600 active:bg-court-800 px-3 py-1.5 rounded-lg border border-court-500/30 transition flex items-center gap-1.5">
+                <i class="fa-solid fa-rotate-left"></i> Reset Trận
+            </button>
+        </div>
+    </header>
+
+    <main class="max-w-md mx-auto px-4 pt-4 space-y-4">
+
+        <!-- Cloud Sync Config Section -->
+        <section class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200/80">
+            <div class="flex items-center justify-between cursor-pointer" onclick="toggleCloudConfig()">
+                <div class="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                    <i class="fa-solid fa-cloud-arrow-up text-emerald-600"></i>
+                    <span>Kết nối Google Sheet CSDL</span>
+                    <span id="sync-status-badge" class="bg-amber-100 text-amber-800 text-[10px] px-2 py-0.5 rounded-full font-bold">Offline (Local)</span>
+                </div>
+                <i id="cloud-chevron" class="fa-solid fa-chevron-down text-slate-400 text-xs transition-transform"></i>
+            </div>
+            <div id="cloud-config-body" class="mt-3 space-y-2 hidden pt-2 border-t border-slate-100">
+                <p class="text-[11px] text-slate-500">Dán URL Google Apps Script Web App của bạn vào đây để đồng bộ nhiều thiết bị:</p>
+                <div class="flex gap-2">
+                    <input type="text" id="sheets-url-input" placeholder="https://script.google.com/macros/s/.../exec" 
+                        class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-court-500 outline-none">
+                    <button onclick="saveSheetsUrl()" class="bg-court-600 hover:bg-court-700 text-white px-3 py-2 rounded-xl text-xs font-bold shrink-0">Lưu</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Input Section: Add New Member -->
+        <section class="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-200/80">
+            <form id="add-member-form" onsubmit="handleAddMember(event)" class="space-y-2.5">
+                <div class="flex gap-2">
+                    <div class="relative flex-1">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                            <i class="fa-solid fa-user-plus text-sm"></i>
+                        </span>
+                        <input type="text" id="member-name-input" placeholder="Tên thành viên mới..." 
+                            class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-court-500 focus:bg-white transition"
+                            required maxlength="25">
+                    </div>
+                    <button type="submit" class="bg-court-600 hover:bg-court-700 active:bg-court-800 text-white px-4 py-2.5 rounded-xl font-medium text-sm transition flex items-center justify-center gap-1.5 shadow-sm tap-active shrink-0">
+                        <i class="fa-solid fa-plus"></i> Thêm
+                    </button>
+                </div>
+                <!-- Rank Selection for New Member -->
+                <div class="flex items-center gap-2">
+                    <span class="text-xs text-slate-500 font-medium shrink-0"><i class="fa-solid fa-layer-group text-slate-400"></i> Trình độ:</span>
+                    <select id="member-rank-input" class="w-full py-1.5 px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-court-500">
+                        <option value="A+">A+ (Đỉnh cao / Chuyên nghiệp)</option>
+                        <option value="A">A (Rất giỏi)</option>
+                        <option value="A-">A- (Giỏi)</option>
+                        <option value="B+" selected>B+ (Khá tốt)</option>
+                        <option value="B">B (Trung bình khá)</option>
+                        <option value="B-">B- (Trung bình)</option>
+                        <option value="C+">C+ (Yếu khá)</option>
+                        <option value="C">C (Mới chơi / Yếu)</option>
+                        <option value="C-">C- (Tập sự)</option>
+                    </select>
+                </div>
+            </form>
+        </section>
+
+        <!-- Filter Bar by Rank -->
+        <section class="bg-white rounded-xl p-2 shadow-sm border border-slate-200/80 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+            <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-1 shrink-0">Lọc:</span>
+            <button onclick="setFilterRank('ALL')" id="filter-btn-ALL" class="filter-btn px-2.5 py-1 rounded-lg text-xs font-bold transition shrink-0 bg-court-600 text-white">Tất cả</button>
+            <button onclick="setFilterRank('A+')" id="filter-btn-A+" class="filter-btn px-2 py-1 rounded-lg text-xs font-bold transition shrink-0 bg-slate-100 text-slate-600">A+</button>
+            <button onclick="setFilterRank('A')" id="filter-btn-A" class="filter-btn px-2 py-1 rounded-lg text-xs font-bold transition shrink-0 bg-slate-100 text-slate-600">A</button>
+            <button onclick="setFilterRank('A-')" id="filter-btn-A-" class="filter-btn px-2 py-1 rounded-lg text-xs font-bold transition shrink-0 bg-slate-100 text-slate-600">A-</button>
+            <button onclick="setFilterRank('B+')" id="filter-btn-B+" class="filter-btn px-2 py-1 rounded-lg text-xs font-bold transition shrink-0 bg-slate-100 text-slate-600">B+</button>
+            <button onclick="setFilterRank('B')" id="filter-btn-B" class="filter-btn px-2 py-1 rounded-lg text-xs font-bold transition shrink-0 bg-slate-100 text-slate-600">B</button>
+            <button onclick="setFilterRank('B-')" id="filter-btn-B-" class="filter-btn px-2 py-1 rounded-lg text-xs font-bold transition shrink-0 bg-slate-100 text-slate-600">B-</button>
+            <button onclick="setFilterRank('C+')" id="filter-btn-C+" class="filter-btn px-2 py-1 rounded-lg text-xs font-bold transition shrink-0 bg-slate-100 text-slate-600">C+</button>
+            <button onclick="setFilterRank('C')" id="filter-btn-C" class="filter-btn px-2 py-1 rounded-lg text-xs font-bold transition shrink-0 bg-slate-100 text-slate-600">C</button>
+            <button onclick="setFilterRank('C-')" id="filter-btn-C-" class="filter-btn px-2 py-1 rounded-lg text-xs font-bold transition shrink-0 bg-slate-100 text-slate-600">C-</button>
+        </section>
+
+        <!-- Navigation Tabs -->
+        <div class="flex bg-slate-200/80 p-1 rounded-xl font-medium text-xs">
+            <button id="tab-btn-queue" onclick="switchTab('queue')" class="flex-1 py-2 rounded-lg text-center font-bold shadow-sm bg-white text-court-800 transition">
+                <i class="fa-solid fa-list-ol mr-1"></i> Bảng Lượt Đánh (<span id="tab-queue-count">0</span>)
+            </button>
+            <button id="tab-btn-members" onclick="switchTab('members')" class="flex-1 py-2 rounded-lg text-center text-slate-600 transition">
+                <i class="fa-solid fa-toggle-on mr-1"></i> Điểm Danh ON/OFF (<span id="tab-members-count">0</span>)
+            </button>
+        </div>
+
+        <!-- TAB 1: ACTIVE QUEUE (TOP PRIORITIES FIRST) -->
+        <section id="tab-queue" class="space-y-2">
+            <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-xs text-emerald-800 flex items-start gap-2">
+                <i class="fa-solid fa-circle-info text-emerald-600 mt-0.5 text-sm"></i>
+                <div>
+                    <strong>Mẹo xếp sân:</strong> Người ở <strong>đầu danh sách (#1)</strong> sẽ đánh trước. Khi đánh xong, chạm vào tên người đó để đưa họ <strong>xuống cuối danh sách</strong>.
+                </div>
+            </div>
+
+            <!-- Queue List Container -->
+            <div id="queue-list" class="space-y-2">
+                <!-- Dynamic Queue Cards Inject Here -->
+            </div>
+
+            <!-- Empty State Queue -->
+            <div id="queue-empty" class="hidden bg-white rounded-2xl p-8 text-center border border-slate-200/80 shadow-sm">
+                <div class="w-16 h-16 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl">
+                    <i class="fa-solid fa-user-slash"></i>
+                </div>
+                <h3 class="font-bold text-slate-700 text-base mb-1">Chưa có ai vào hàng chờ</h3>
+                <p class="text-xs text-slate-400">Hãy bật ON cho các thành viên có mặt tại sân hoặc thêm mới phía trên.</p>
+            </div>
+        </section>
+
+        <!-- TAB 2: MEMBERS MANAGEMENT (ON/OFF LIST) -->
+        <section id="tab-members" class="space-y-2 hidden">
+            <div class="bg-blue-50 border border-blue-200 rounded-xl p-3 text-xs text-blue-800 flex items-start gap-2">
+                <i class="fa-solid fa-circle-info text-blue-600 mt-0.5 text-sm"></i>
+                <div>
+                    Bật <strong>ON</strong> đối với thành viên đã đến sân để đưa họ vào danh sách chờ. Tắt <strong>OFF</strong> khi họ ra về.
+                </div>
+            </div>
+
+            <!-- Members List Container -->
+            <div id="members-list" class="space-y-2">
+                <!-- Dynamic Member Cards Inject Here -->
+            </div>
+
+            <!-- Empty State Members -->
+            <div id="members-empty" class="hidden bg-white rounded-2xl p-8 text-center border border-slate-200/80 shadow-sm">
+                <div class="w-16 h-16 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl">
+                    <i class="fa-solid fa-users-slash"></i>
+                </div>
+                <h3 class="font-bold text-slate-700 text-base mb-1">Chưa có thành viên nào</h3>
+                <p class="text-xs text-slate-400">Hãy thêm thành viên mới ở ô phía trên.</p>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Toast Notification Element -->
+    <div id="toast" class="fixed bottom-4 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs px-4 py-2.5 rounded-full shadow-lg transition-all duration-300 opacity-0 pointer-events-none z-50 flex items-center gap-2">
+        <i class="fa-solid fa-circle-check text-emerald-400"></i>
+        <span id="toast-message">Thông báo</span>
+    </div>
+
+    <!-- Edit Name & Rank Modal -->
+    <div id="edit-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-5 w-full max-w-sm shadow-xl space-y-4">
+            <h3 class="font-bold text-slate-800 text-base">Cập nhật thành viên</h3>
+            <div>
+                <label class="text-xs text-slate-500 font-medium mb-1 block">Tên thành viên:</label>
+                <input type="text" id="edit-member-name" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-court-500 outline-none">
+            </div>
+            <div>
+                <label class="text-xs text-slate-500 font-medium mb-1 block">Trình độ (Cấp bậc):</label>
+                <select id="edit-member-rank" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-court-500 outline-none">
+                    <option value="A+">A+ (Đỉnh cao / Chuyên nghiệp)</option>
+                    <option value="A">A (Rất giỏi)</option>
+                    <option value="A-">A- (Giỏi)</option>
+                    <option value="B+">B+ (Khá tốt)</option>
+                    <option value="B">B (Trung bình khá)</option>
+                    <option value="B-">B- (Trung bình)</option>
+                    <option value="C+">C+ (Yếu khá)</option>
+                    <option value="C">C (Mới chơi / Yếu)</option>
+                    <option value="C-">C- (Tập sự)</option>
+                </select>
+            </div>
+            <input type="hidden" id="edit-member-id">
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="closeEditModal()" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-600 text-xs font-medium hover:bg-slate-200">Hủy</button>
+                <button onclick="saveMemberName()" class="px-4 py-2 rounded-xl bg-court-600 text-white text-xs font-medium hover:bg-court-700">Lưu thay đổi</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Logic Script -->
+    <script>
+        // Helper to escape HTML characters
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        // Toast Helper
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            const messageEl = document.getElementById('toast-message');
+            messageEl.innerText = msg;
+            toast.classList.remove('opacity-0', 'pointer-events-none');
+            toast.classList.add('opacity-100');
+            setTimeout(() => {
+                toast.classList.remove('opacity-100');
+                toast.classList.add('opacity-0', 'pointer-events-none');
+            }, 2500);
+        }
+
+        // State Management
+        let members = [];
+        let currentFilterRank = 'ALL';
+        let sheetsScriptUrl = localStorage.getItem('badminton_sheets_url') || '';
+
+        // Rank Color Mapping Definitions (A+, A, A-, B+, B, B-, C+, C, C-)
+        const RANK_CONFIG = {
+            'A+': { bg: 'bg-rose-600', text: 'text-white', border: 'border-rose-700', label: 'A+' },
+            'A':  { bg: 'bg-red-500', text: 'text-white', border: 'border-red-600', label: 'A' },
+            'A-': { bg: 'bg-pink-500', text: 'text-white', border: 'border-pink-600', label: 'A-' },
+            
+            'B+': { bg: 'bg-indigo-600', text: 'text-white', border: 'border-indigo-700', label: 'B+' },
+            'B':  { bg: 'bg-blue-500', text: 'text-white', border: 'border-blue-600', label: 'B' },
+            'B-': { bg: 'bg-sky-500', text: 'text-white', border: 'border-sky-600', label: 'B-' },
+            
+            'C+': { bg: 'bg-emerald-600', text: 'text-white', border: 'border-emerald-700', label: 'C+' },
+            'C':  { bg: 'bg-amber-500', text: 'text-white', border: 'border-amber-600', label: 'C' },
+            'C-': { bg: 'bg-slate-400', text: 'text-white', border: 'border-slate-500', label: 'C-' }
+        };
+
+        const STORAGE_KEY = 'badminton_queue_members_v2';
+
+        // Load data on start
+        window.onload = function() {
+            if (sheetsScriptUrl) {
+                document.getElementById('sheets-url-input').value = sheetsScriptUrl;
+                fetchFromGoogleSheets();
+            } else {
+                loadFromStorage();
+                if (members.length === 0) {
+                    members = [
+                        { id: '1', name: 'Nguyễn Văn Ánh', rank: 'A+', active: true, matchesPlayed: 2, timestamp: 1000 },
+                        { id: '2', name: 'Trần Thị Bình', rank: 'B+', active: true, matchesPlayed: 1, timestamp: 2000 },
+                        { id: '3', name: 'Lê Hoàng Cường', rank: 'B', active: true, matchesPlayed: 2, timestamp: 3000 },
+                        { id: '4', name: 'Phạm Đức Dũng', rank: 'C+', active: true, matchesPlayed: 1, timestamp: 4000 },
+                        { id: '5', name: 'Vũ Thị Trâm', rank: 'C-', active: false, matchesPlayed: 0, timestamp: 5000 }
+                    ];
+                    saveToStorage();
+                }
+                render();
+            }
+        };
+
+        function toggleCloudConfig() {
+            const body = document.getElementById('cloud-config-body');
+            const chevron = document.getElementById('cloud-chevron');
+            body.classList.toggle('hidden');
+            chevron.classList.toggle('rotate-180');
+        }
+
+        function saveSheetsUrl() {
+            const url = document.getElementById('sheets-url-input').value.trim();
+            sheetsScriptUrl = url;
+            localStorage.setItem('badminton_sheets_url', url);
+            if (url) {
+                showToast("Đã lưu URL! Đang tải dữ liệu từ Google Sheet...");
+                fetchFromGoogleSheets();
+            } else {
+                updateSyncBadge(false);
+                showToast("Đã tắt kết nối Google Sheet (Dùng Offline)");
+            }
+        }
+
+        function updateSyncBadge(isCloud) {
+            const badge = document.getElementById('sync-status-badge');
+            if (isCloud) {
+                badge.className = "bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded-full font-bold";
+                badge.innerText = "Google Sheet Syncing";
+            } else {
+                badge.className = "bg-amber-100 text-amber-800 text-[10px] px-2 py-0.5 rounded-full font-bold";
+                badge.innerText = "Offline (Local)";
+            }
+        }
+
+        async function fetchFromGoogleSheets() {
+            if (!sheetsScriptUrl) return;
+            try {
+                updateSyncBadge(true);
+                const res = await fetch(sheetsScriptUrl);
+                const data = await res.json();
+                if (Array.isArray(data)) {
+                    members = data;
+                    saveToStorage();
+                    render();
+                    showToast("Đồng bộ Google Sheet thành công!");
+                }
+            } catch (err) {
+                console.error("Sheets Fetch Error:", err);
+                showToast("Lỗi tải dữ liệu Google Sheet. Dùng dữ liệu bộ nhớ tạm.");
+                loadFromStorage();
+                render();
+            }
+        }
+
+        async function saveToGoogleSheets() {
+            if (!sheetsScriptUrl) return;
+            try {
+                await fetch(sheetsScriptUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify(members)
+                });
+            } catch (err) {
+                console.error("Sheets Save Error:", err);
+            }
+        }
+
+        // Storage helpers
+        function saveToStorage() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(members));
+            saveToGoogleSheets();
+        }
+            render();
+        };
+
+        // Storage helpers
+        function saveToStorage() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(members));
+        }
+
+        function loadFromStorage() {
+            try {
+                const stored = localStorage.getItem(STORAGE_KEY);
+                if (stored) {
+                    members = JSON.parse(stored);
+                }
+            } catch (e) {
+                console.error("Failed to load local storage", e);
+                members = [];
+            }
+        }
+
+        // Add New Member with Rank
+        function handleAddMember(e) {
+            e.preventDefault();
+            const input = document.getElementById('member-name-input');
+            const rankInput = document.getElementById('member-rank-input');
+            const name = input.value.trim();
+            const rank = rankInput.value || 'B';
+            
+            if (!name) return;
+
+            const newMember = {
+                id: Date.now().toString(),
+                name: name,
+                rank: rank,
+                active: true, // Default ON when newly added
+                matchesPlayed: 0,
+                timestamp: Date.now() // Used for order
+            };
+
+            members.push(newMember);
+            saveToStorage();
+            input.value = '';
+            showToast(`Đã thêm "${name}" (Hạng ${rank}) và bật trạng thái ON`);
+            render();
+        }
+
+        // Set Filter Rank
+        function setFilterRank(rank) {
+            currentFilterRank = rank;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.className = "filter-btn px-2.5 py-1 rounded-lg text-xs font-bold transition shrink-0 bg-slate-100 text-slate-600";
+            });
+            const activeBtn = document.getElementById(`filter-btn-${rank}`);
+            if (activeBtn) {
+                activeBtn.className = "filter-btn px-2.5 py-1 rounded-lg text-xs font-bold transition shrink-0 bg-court-600 text-white shadow-sm";
+            }
+            render();
+        }
+
+        // Toggle Active State (ON/OFF)
+        function toggleMemberActive(id) {
+            const member = members.find(m => m.id === id);
+            if (member) {
+                member.active = !member.active;
+                if (member.active) {
+                    member.timestamp = Date.now();
+                }
+                saveToStorage();
+                showToast(`${member.name}: ${member.active ? 'Đã ON (Có mặt)' : 'Đã OFF (Vắng)'}`);
+                render();
+            }
+        }
+
+        // Move single member to bottom of Queue
+        function moveToBottom(id) {
+            const member = members.find(m => m.id === id);
+            if (member && member.active) {
+                member.timestamp = Date.now();
+                member.matchesPlayed += 1;
+                saveToStorage();
+                showToast(`Đã chuyển ${member.name} xuống cuối hàng (+1 trận)`);
+                render();
+            }
+        }
+
+        // Reset All Matches Counter
+        function resetStats() {
+            if (confirm("Bạn có muốn đặt lại số trận đã đánh của tất cả mọi người về 0 không?")) {
+                members.forEach(m => m.matchesPlayed = 0);
+                saveToStorage();
+                showToast("Đã đặt lại số trận về 0");
+                render();
+            }
+        }
+
+        // Delete Member
+        function deleteMember(id, name) {
+            if (confirm(`Bạn có chắc chắn muốn xóa thành viên "${name}"?`)) {
+                members = members.filter(m => m.id !== id);
+                saveToStorage();
+                showToast(`Đã xóa ${name}`);
+                render();
+            }
+        }
+
+        // Edit Member Modal
+        function openEditModal(id, name, rank) {
+            document.getElementById('edit-member-id').value = id;
+            document.getElementById('edit-member-name').value = name;
+            document.getElementById('edit-member-rank').value = rank || 'B';
+            document.getElementById('edit-modal').classList.remove('hidden');
+        }
+
+        function closeEditModal() {
+            document.getElementById('edit-modal').classList.add('hidden');
+        }
+
+        function saveMemberName() {
+            const id = document.getElementById('edit-member-id').value;
+            const newName = document.getElementById('edit-member-name').value.trim();
+            const newRank = document.getElementById('edit-member-rank').value;
+
+            if (newName) {
+                const member = members.find(m => m.id === id);
+                if (member) {
+                    member.name = newName;
+                    member.rank = newRank;
+                    saveToStorage();
+                    render();
+                    showToast("Đã cập nhật thông tin thành viên");
+                }
+            }
+            closeEditModal();
+        }
+
+        // Tab Switcher
+        function switchTab(tab) {
+            const queueTab = document.getElementById('tab-queue');
+            const membersTab = document.getElementById('tab-members');
+            const queueBtn = document.getElementById('tab-btn-queue');
+            const membersBtn = document.getElementById('tab-btn-members');
+
+            if (tab === 'queue') {
+                queueTab.classList.remove('hidden');
+                membersTab.classList.add('hidden');
+                queueBtn.className = "flex-1 py-2 rounded-lg text-center font-bold shadow-sm bg-white text-court-800 transition";
+                membersBtn.className = "flex-1 py-2 rounded-lg text-center text-slate-600 transition";
+            } else {
+                queueTab.classList.add('hidden');
+                membersTab.classList.remove('hidden');
+                membersBtn.className = "flex-1 py-2 rounded-lg text-center font-bold shadow-sm bg-white text-court-800 transition";
+                queueBtn.className = "flex-1 py-2 rounded-lg text-center text-slate-600 transition";
+            }
+        }
+
+        // Helper to get Rank Badge Tag HTML
+        function getRankBadgeHtml(rankKey) {
+            const cfg = RANK_CONFIG[rankKey] || RANK_CONFIG['B'];
+            // Fixed width badge placed BEFORE name
+            return `<span class="${cfg.bg} ${cfg.text} inline-block w-8 text-center text-[11px] font-extrabold py-0.5 rounded shadow-sm shrink-0">${cfg.label}</span>`;
+        }
+
+        // Render UI
+        function render() {
+            let activeQueue = members
+                .filter(m => m.active)
+                .sort((a, b) => a.timestamp - b.timestamp);
+
+            let allMembersSorted = [...members].sort((a, b) => a.name.localeCompare(b.name, 'vi'));
+
+            // Apply Rank Filtering if not ALL
+            if (currentFilterRank !== 'ALL') {
+                activeQueue = activeQueue.filter(m => (m.rank || 'B') === currentFilterRank);
+                allMembersSorted = allMembersSorted.filter(m => (m.rank || 'B') === currentFilterRank);
+            }
+
+            // Update Counters
+            document.getElementById('tab-queue-count').innerText = members.filter(m => m.active).length;
+            document.getElementById('tab-members-count').innerText = members.length;
+
+            // Render Queue Tab
+            const queueListContainer = document.getElementById('queue-list');
+            const queueEmpty = document.getElementById('queue-empty');
+
+            if (activeQueue.length === 0) {
+                queueListContainer.innerHTML = '';
+                queueEmpty.classList.remove('hidden');
+            } else {
+                queueEmpty.classList.add('hidden');
+                queueListContainer.innerHTML = activeQueue.map((m, index) => {
+                    const isTopPriority = index === 0;
+                    const isNextInLine = index < 4;
+                    
+                    let badgeColor = "bg-slate-100 text-slate-600 border-slate-200";
+                    if (isTopPriority) badgeColor = "bg-amber-400 text-court-900 font-extrabold shadow-sm";
+                    else if (isNextInLine) badgeColor = "bg-emerald-100 text-emerald-800 font-bold border-emerald-200";
+
+                    return `
+                        <div onclick="moveToBottom('${m.id}')" 
+                            class="queue-item-enter bg-white rounded-2xl p-3.5 border border-slate-200/90 shadow-sm hover:border-court-500 active:border-court-600 transition cursor-pointer tap-active flex items-center justify-between group">
+                            
+                            <div class="flex items-center gap-3">
+                                <!-- Order Position Number Badge -->
+                                <div class="w-8 h-8 rounded-xl flex items-center justify-center text-sm ${badgeColor}">
+                                    ${index + 1}
+                                </div>
+                                
+                                <div>
+                                    <div class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                                        ${getRankBadgeHtml(m.rank || 'B')}
+                                        <span class="truncate">${escapeHtml(m.name)}</span>
+                                    </div>
+                                    <div class="text-[11px] text-slate-400 font-medium mt-0.5">
+                                        Đã đánh: <span class="text-court-700 font-bold">${m.matchesPlayed} trận</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                <span class="text-[11px] font-medium text-slate-400 group-hover:text-court-600 transition flex items-center gap-1">
+                                    Xuống cuối <i class="fa-solid fa-arrow-down-long"></i>
+                                </span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // Render Members ON/OFF Tab
+            const membersListContainer = document.getElementById('members-list');
+            const membersEmpty = document.getElementById('members-empty');
+
+            if (allMembersSorted.length === 0) {
+                membersListContainer.innerHTML = '';
+                membersEmpty.classList.remove('hidden');
+            } else {
+                membersEmpty.classList.add('hidden');
+                membersListContainer.innerHTML = allMembersSorted.map(m => {
+                    return `
+                        <div class="bg-white rounded-2xl p-3.5 border border-slate-200/90 shadow-sm flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <button onclick="toggleMemberActive('${m.id}')" 
+                                    class="w-12 h-6 rounded-full transition-colors relative focus:outline-none ${m.active ? 'bg-court-600' : 'bg-slate-300'}">
+                                    <div class="w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform ${m.active ? 'translate-x-6' : 'translate-x-0.5'} shadow-md flex items-center justify-center text-[10px]">
+                                        ${m.active ? '<i class="fa-solid fa-check text-court-600"></i>' : ''}
+                                    </div>
+                                </button>
+                                <div>
+                                    <div class="font-semibold text-slate-800 text-sm ${m.active ? '' : 'text-slate-400 line-through'} flex items-center gap-2">
+                                        ${getRankBadgeHtml(m.rank || 'B')}
+                                        <span class="truncate">${escapeHtml(m.name)}</span>
+                                    </div>
+                                    <div class="text-[11px] text-slate-400 mt-0.5">
+                                        Trạng thái: <span class="${m.active ? 'text-emerald-600 font-semibold' : 'text-slate-400'}">${m.active ? 'Đã đến (ON)' : 'Vắng mặt (OFF)'}</span> • ${m.matchesPlayed} trận
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-1">
+                                <button onclick="openEditModal('${m.id}', '${escapeHtml(m.name)}', '${m.rank || 'B'}')" class="p-2 text-slate-400 hover:text-court-600 rounded-lg hover:bg-slate-50 transition">
+                                    <i class="fa-solid fa-pen text-xs"></i>
+                                </button>
+                                <button onclick="deleteMember('${m.id}', '${escapeHtml(m.name)}')" class="p-2 text-slate-400 hover:text-red-500 rounded-lg hover:bg-slate-50 transition">
+                                    <i class="fa-solid fa-trash text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+    </script>
+</body>
+</html>
