@@ -115,20 +115,6 @@
 
         <!-- Input Section: Add New Member (Admin Only) -->
         <section id="admin-add-section" class="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-200/80">
-                <div id="cloud-status-block" class="hidden flex items-center justify-between text-[11px] text-slate-500 h-5">
-                    <span>Đồng bộ đám mây:</span>
-                    <span id="sync-status-badge" class="bg-amber-100 text-amber-800 text-[10px] px-2 py-0.5 rounded-full font-bold">Offline</span>
-                </div>
-                <!-- Local Status Block -->
-                <div id="local-status-block" class="flex items-center justify-between text-[11px] text-slate-500 h-5">
-                    <span>Trạng thái bộ nhớ:</span>
-                    <span class="bg-slate-100 text-slate-600 text-[10px] px-2 py-0.5 rounded-full font-bold">Dữ liệu không lưu vào đám mây</span>
-                </div>
-            </div>
-        </section>
-
-        <!-- Input Section: Add New Member (Admin Only) -->
-        <section class="admin-only bg-white rounded-2xl p-3.5 shadow-sm border border-slate-200/80">
             <form id="add-member-form" onsubmit="handleAddMember(event)" class="space-y-2.5">
                 <div class="flex gap-2">
                     <div class="relative flex-1">
@@ -242,38 +228,48 @@
         <span id="toast-message">Thông báo</span>
     </div>
 
-    <!-- Redesigned Modern Admin Login Modal -->
+    <!-- Modern Admin Login Modal -->
     <div id="login-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 hidden flex items-center justify-center p-4 queue-item-enter">
-        <div class="bg-white rounded-3xl p-6 w-full max-w-xs shadow-2xl space-y-5 border border-slate-100 relative overflow-hidden">
-            <div class="absolute -top-10 -right-10 w-24 h-24 bg-amber-400/20 rounded-full blur-xl pointer-events-none"></div>
+        <div class="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl space-y-5 border border-slate-100 relative overflow-hidden">
+            <div class="absolute -top-12 -right-12 w-32 h-32 bg-amber-400/15 rounded-full blur-2xl pointer-events-none"></div>
             
-            <div class="text-center relative">
-                <div class="w-14 h-14 bg-gradient-to-tr from-amber-500 to-amber-300 text-court-900 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg shadow-amber-500/20 text-2xl font-bold">
-                    <i class="fa-solid fa-key"></i>
+            <div class="flex items-center justify-between relative">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-gradient-to-tr from-amber-500 to-amber-300 text-court-900 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/20 text-xl font-bold shrink-0">
+                        <i class="fa-solid fa-key"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-slate-800 text-base">Đăng Nhập Admin</h3>
+                        <p class="text-[11px] text-slate-400">Xác thực để quản lý câu lạc bộ</p>
+                    </div>
                 </div>
-                <h3 class="font-extrabold text-slate-800 text-base">Đăng Nhập Admin</h3>
-                <p class="text-[11px] text-slate-400 mt-0.5">Nhập mật khẩu để mở khóa quyền quản lý</p>
+                <button onclick="closeLoginModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-400 hover:text-slate-600 flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark text-xs"></i>
+                </button>
             </div>
 
-            <div class="space-y-2">
-                <div class="relative">
-                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                        <i class="fa-solid fa-lock text-xs"></i>
-                    </span>
-                    <input type="password" id="admin-pass-input" placeholder="Nhập mật khẩu Admin..." 
-                        class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-court-500 focus:bg-white transition text-center font-semibold text-slate-700 placeholder:font-normal placeholder:text-slate-400"
-                        onkeydown="if(event.key==='Enter') submitAdminLogin()">
+            <div class="space-y-3 pt-1">
+                <div>
+                    <label class="text-[11px] text-slate-500 font-semibold mb-1 block">Mật khẩu quản trị:</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                            <i class="fa-solid fa-lock text-xs"></i>
+                        </span>
+                        <input type="password" id="admin-pass-input" placeholder="Nhập mật khẩu (mặc định 123456)..." 
+                            class="w-full pl-9 pr-3.5 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-court-500 focus:bg-white transition font-medium text-slate-700 placeholder:font-normal placeholder:text-slate-400"
+                            onkeydown="if(event.key==='Enter') submitAdminLogin()">
+                    </div>
                 </div>
-                <p id="admin-pass-error" class="text-[11px] text-red-500 text-center font-medium hidden flex items-center justify-center gap-1">
-                    <i class="fa-solid fa-circle-exclamation"></i> <span>Mật khẩu không chính xác!</span>
+                <p id="admin-pass-error" class="text-[11px] text-red-500 font-medium hidden flex items-center gap-1.5 px-1">
+                    <i class="fa-solid fa-circle-exclamation"></i> <span>Mật khẩu không chính xác! Vui lòng thử lại.</span>
                 </p>
             </div>
 
-            <div class="flex gap-2 pt-1">
-                <button onclick="closeLoginModal()" class="w-1/2 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-600 text-xs font-bold transition tap-active">
-                    Hủy
+            <div class="flex gap-2.5 pt-2">
+                <button onclick="closeLoginModal()" class="w-1/2 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-600 text-xs font-bold transition tap-active">
+                    Hủy bỏ
                 </button>
-                <button onclick="submitAdminLogin()" class="w-1/2 py-2.5 rounded-xl bg-gradient-to-r from-court-600 to-court-700 hover:from-court-700 hover:to-court-800 text-white text-xs font-bold shadow-md shadow-court-600/30 transition tap-active flex items-center justify-center gap-1.5">
+                <button onclick="submitAdminLogin()" class="w-1/2 py-3 rounded-2xl bg-gradient-to-r from-court-600 to-court-700 hover:from-court-700 hover:to-court-800 text-white text-xs font-bold shadow-lg shadow-court-600/25 transition tap-active flex items-center justify-center gap-1.5">
                     <span>Xác nhận</span>
                     <i class="fa-solid fa-arrow-right text-[10px]"></i>
                 </button>
@@ -281,7 +277,7 @@
         </div>
     </div>
 
-    <!-- Redesigned Modern Edit Name & Rank Modal -->
+    <!-- Modern Edit Name & Rank Modal -->
     <div id="edit-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 hidden flex items-center justify-center p-4 queue-item-enter">
         <div class="bg-white rounded-3xl p-6 w-full max-w-xs shadow-2xl space-y-4 border border-slate-100 relative overflow-hidden">
             <div class="absolute -top-10 -right-10 w-24 h-24 bg-court-500/10 rounded-full blur-xl pointer-events-none"></div>
@@ -370,7 +366,7 @@
         // =========================================================================
         // CẤU HÌNH ĐƯỜNG DẪN GOOGLE APPS SCRIPT CỦA BẠN TẠI ĐÂY:
         const DEFAULT_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbxp8QNDuiU7ZD_-CoOTyX83zysiPuTt89WmKwK3rJSCDQLCMv8bKGNq0TrqZ5ZaaPSpYA/exec';
-        const ADMIN_PASSWORD = '123456';
+        const ADMIN_PASSWORD = 'kietbui';
         // =========================================================================
 
         function escapeHtml(str) {
@@ -431,7 +427,7 @@
                 localStorage.setItem('badminton_is_admin', 'true');
                 if (errEl) errEl.classList.add('hidden');
                 closeLoginModal();
-                applyAdminUI();
+                updateHeaderActions();
                 render();
                 showToast("Đã đăng nhập quyền Admin!");
             } else {
@@ -496,25 +492,11 @@
                 `;
             } else {
                 container.innerHTML = `
-                    <button onclick="promptAdminLogin()" class="text-xs bg-court-700 hover:bg-court-600 active:bg-court-800 text-white px-3 py-1.5 rounded-xl border border-court-500/30 transition flex items-center gap-1.5 font-medium">
+                    <button onclick="openLoginModal()" class="text-xs bg-court-700 hover:bg-court-600 active:bg-court-800 text-white px-3 py-1.5 rounded-xl border border-court-500/30 transition flex items-center gap-1.5 font-medium">
                         <i class="fa-solid fa-key text-amber-300"></i>
                         <span>Đăng nhập</span>
                     </button>
                 `;
-            }
-        }
-
-        function promptAdminLogin() {
-            const pwd = prompt("Nhập mật khẩu Admin để quản lý:");
-            if (pwd === null) return;
-            if (pwd === ADMIN_PASSWORD) {
-                isAdmin = true;
-                localStorage.setItem('badminton_is_admin', 'true');
-                showToast("Đăng nhập Admin thành công!");
-                updateHeaderActions();
-                render();
-            } else {
-                showToast("Mật khẩu không chính xác!");
             }
         }
 
@@ -801,9 +783,17 @@
         function render() {
             // Admin Section Visibility Toggle
             const addSection = document.getElementById('admin-add-section');
+            const storageStatusWrapper = document.getElementById('storage-status-wrapper');
+            
             if (addSection) {
                 if (isAdmin) addSection.classList.remove('hidden');
                 else addSection.classList.add('hidden');
+            }
+
+            // Only show storage status bar when Admin is logged in
+            if (storageStatusWrapper) {
+                if (isAdmin) storageStatusWrapper.classList.remove('hidden');
+                else storageStatusWrapper.classList.add('hidden');
             }
 
             let activeQueue = members
