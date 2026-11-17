@@ -695,6 +695,7 @@
         }
 
         // Toggle Active State (ON/OFF) - Đã sửa logic ghi nhận thời gian khi vừa OFF
+        // Toggle Active State (ON/OFF) - Đã bổ sung lưu mốc timestamp khi OFF
         function toggleMemberActive(id) {
             if (storageMode === 'cloud' && !isAdmin) {
                 showToast("Chế độ Cloud yêu cầu quyền Admin để thay đổi ON/OFF!");
@@ -706,13 +707,16 @@
                 member.active = !member.active;
 
                 if (member.active) {
-                    // Khi vừa bật ON: Reset mốc thời gian xếp sân
+                    // Khi bật ON: Xóa mốc thời gian vắng và reset thời gian xếp sân
                     member.timestamp = now;
+                    member.lastOnlineTimestamp = null;
+                    member.lastOnline = 'Đang ở sân';
                     showToast(`${member.name}: Đã ON (Đã đến sân)`);
                 } else {
-                    // Khi vừa tắt OFF: Lập tức ghi nhận ngay thời gian rời sân/lần cuối trực tuyến
+                    // Khi tắt OFF: Lưu cả chuỗi thời gian và mốc số timestamp để tính số ngày vắng
                     member.lastOnline = formatLastOnline(now);
-                    showToast(`${member.name}: Đã OFF (Đã ra về lúc ${member.lastOnline})`);
+                    member.lastOnlineTimestamp = now; 
+                    showToast(`${member.name}: Đã OFF (Đã ra về)`);
                 }
 
                 saveToStorage();
