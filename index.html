@@ -462,7 +462,7 @@
             applyStorageModeUI();
             updateHeaderActions();
 
-            if (storageMode === 'cloud' && sheetsScriptUrl && sheetsScriptUrl !== 'https://script.google.com/macros/s/THAY_LINK_GOOGLE_SCRIPT_CUA_BAN_VAO_DAY/exec') {
+            if (storageMode === 'cloud' && sheetsScriptUrl && sheetsScriptUrl !== DEFAULT_SHEETS_URL) {
                 fetchFromGoogleSheets();
             } else {
                 loadFromStorage();
@@ -573,13 +573,12 @@
                 const data = await res.json();
                 if (Array.isArray(data)) {
                     members = data;
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify(members));
+                    // Không ghi đè dữ liệu Cloud vào local nữa để đảm bảo 2 danh sách tách biệt
                     render();
                 }
             } catch (err) {
                 console.error("Sheets Fetch Error:", err);
                 updateSyncBadge(false);
-                loadFromStorage();
                 render();
             }
         }
@@ -597,11 +596,14 @@
             }
         }
 
-        // Storage helpers
+        // Storage helpers - Tách biệt tuyệt đối giữa Local và Cloud
         function saveToStorage() {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(members));
             if (storageMode === 'cloud') {
+                // Ở chế độ Cloud: Chỉ đẩy dữ liệu lên Google Sheet
                 saveToGoogleSheets();
+            } else {
+                // Ở chế độ Local: Chỉ lưu vào bộ nhớ máy hiện tại
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(members));
             }
         }
 
