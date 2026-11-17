@@ -530,23 +530,14 @@
             applyStorageModeUI();
 
             if (mode === 'cloud') {
-                showToast("Đã chuyển sang chế độ Cloud (Google Sheet)");
-                members = []; // Xóa sạch dữ liệu cũ trên màn hình để chuẩn bị load cloud
+                showToast("Đã chuyển sang chế độ Cloud");
+                members = [];
                 render();
-                
-                const membersListContainer = document.getElementById('members-list');
-                if (membersListContainer) {
-                    membersListContainer.innerHTML = `<div class="bg-white rounded-2xl p-6 text-center text-slate-400 text-xs"><i class="fa-solid fa-spinner fa-spin text-court-600 text-base mb-2"></i><div>Đang tải dữ liệu từ Google Sheet...</div></div>`;
-                }
 
-                // SỬA TẠI ĐÂY: Dùng startsWith('http') thay vì so sánh khác DEFAULT_SHEETS_URL
                 if (sheetsScriptUrl && sheetsScriptUrl.startsWith('http')) {
                     fetchFromGoogleSheets();
                 } else {
-                    updateSyncBadge(false);
-                    showToast("Chưa có đường dẫn Google Sheet API hợp lệ!");
-                    members = [];
-                    render();
+                    updateSyncBadge(false, "Cloud (Chưa cài link API)");
                 }
             } else {
                 showToast("Đã chuyển sang chế độ Local (Lưu trên máy)");
@@ -558,68 +549,50 @@
         function applyStorageModeUI() {
             const btnLocal = document.getElementById('mode-btn-local');
             const btnCloud = document.getElementById('mode-btn-cloud');
-            const cloudContainer = document.getElementById('cloud-status-container');
-            const localContainer = document.getElementById('local-status-container');
+            const statusText = document.getElementById('storage-status-text');
 
             if (storageMode === 'cloud') {
-                btnCloud.className = "px-2.5 py-1 rounded-lg transition bg-court-600 text-white shadow-sm";
-                btnLocal.className = "px-2.5 py-1 rounded-lg transition text-slate-500 hover:text-slate-700";
-                cloudContainer.classList.remove('hidden');
-                localContainer.classList.add('hidden');
+                btnCloud.className = "px-3 py-1 rounded-lg transition tap-active bg-court-600 text-white shadow-sm";
+                btnLocal.className = "px-3 py-1 rounded-lg transition tap-active text-slate-500 hover:text-slate-700";
+                if (statusText) statusText.innerHTML = `<span class="text-amber-600 font-bold">Cloud (Đang kết nối...)</span>`;
             } else {
-                btnLocal.className = "px-2.5 py-1 rounded-lg transition bg-white text-court-800 shadow-sm";
-                btnCloud.className = "px-2.5 py-1 rounded-lg transition text-slate-500 hover:text-slate-700";
-                localContainer.classList.remove('hidden');
-                cloudContainer.classList.add('hidden');
+                btnLocal.className = "px-3 py-1 rounded-lg transition tap-active bg-white text-court-800 shadow-sm";
+                btnCloud.className = "px-3 py-1 rounded-lg transition tap-active text-slate-500 hover:text-slate-700";
+                if (statusText) statusText.innerHTML = `<span class="text-court-700 font-bold">Bộ nhớ máy</span>`;
             }
         }
 
-        function updateSyncBadge(isSyncing) {
-            const badge = document.getElementById('sync-status-badge');
-            if (!badge) return;
+        function updateSyncBadge(isSyncing, errorMsg = '') {
+            const statusText = document.getElementById('storage-status-text');
+            if (!statusText || storageMode !== 'cloud') return;
+
             if (isSyncing) {
-                badge.className = "bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded-full font-bold";
-                badge.innerText = "Đã đồng bộ";
+                statusText.innerHTML = `<span class="text-emerald-600 font-bold">Cloud (Đã kết nối)</span>`;
             } else {
-                badge.className = "bg-amber-100 text-amber-800 text-[10px] px-2 py-0.5 rounded-full font-bold";
-                badge.innerText = "Lỗi / Chưa kết nối";
+                statusText.innerHTML = `<span class="text-red-500 font-bold">${errorMsg || 'Cloud (Lỗi kết nối API)'}</span>`;
             }
         }
 
         async function fetchFromGoogleSheets() {
             if (storageMode !== 'cloud' || !sheetsScriptUrl || !sheetsScriptUrl.startsWith('http')) {
-                updateSyncBadge(false);
+                updateSyncBadge(false, "Cloud (URL không hợp lệ)");
                 return;
             }
             try {
-                updateSyncBadge(true);
-                const res = await fetch(sheetsScriptUrl, { method: 'GET', mode: 'cors' });
-                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-                
+                const res = await fetch(sheetsScriptUrl);
+                if (!res.ok) throw new Error("Lỗi HTTP");
                 const data = await res.json();
                 if (Array.isArray(data)) {
                     members = data;
                     updateSyncBadge(true);
                     render();
                 } else {
-                    throw new Error("Dữ liệu trả về không đúng định dạng mảng");
+                    throw new Error("Format sai");
                 }
             } catch (err) {
                 console.error("Sheets Fetch Error:", err);
-                updateSyncBadge(false);
-                showToast("Không thể kết nối Google Sheet! Kiểm tra lại URL API.");
-                
-                // Hiển thị thông báo lỗi trực tiếp lên danh sách để dễ nhận biết
-                const membersListContainer = document.getElementById('members-list');
-                if (membersListContainer) {
-                    membersListContainer.innerHTML = `
-                        <div class="bg-red-50 border border-red-200 rounded-2xl p-6 text-center text-red-600 text-xs space-y-2">
-                            <i class="fa-solid fa-triangle-exclamation text-xl"></i>
-                            <div class="font-bold">Không thể kết nối tới Google Sheets API!</div>
-                            <div class="text-slate-500 text-[11px]">Vui lòng kiểm tra lại quyền truy cập hoặc Deploy lại Google Apps Script phiên bản mới nhất.</div>
-                        </div>
-                    `;
-                }
+                updateSyncBadge(false, "Cloud (Không thể kết nối)");
+                render();
             }
         }
 
