@@ -468,7 +468,7 @@
                 if (membersListContainer) {
                     membersListContainer.innerHTML = `<div class="bg-white rounded-2xl p-6 text-center text-slate-400 text-xs"><i class="fa-solid fa-spinner fa-spin text-court-600 text-base mb-2"></i><div>Đang kết nối và tải dữ liệu từ Google Sheet...</div></div>`;
                 }
-                if (sheetsScriptUrl && sheetsScriptUrl !== DEFAULT_SHEETS_URL) {
+                if (sheetsScriptUrl && sheetsScriptUrl.startsWith('http')) {
                     fetchFromGoogleSheets();
                 } else {
                     updateSyncBadge(false);
