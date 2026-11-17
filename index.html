@@ -897,9 +897,17 @@
 
             let allMembersSorted = [...members].sort((a, b) => a.name.localeCompare(b.name, 'vi'));
 
+            // Apply Rank Filtering if not ALL
             if (currentFilterRank !== 'ALL') {
                 activeQueue = activeQueue.filter(m => (m.rank || 'B') === currentFilterRank);
                 allMembersSorted = allMembersSorted.filter(m => (m.rank || 'B') === currentFilterRank);
+            }
+
+            // Lọc thêm theo từ khóa tìm kiếm tên thành viên
+            const searchInputEl = document.getElementById('member-search-input');
+            const keyword = searchInputEl ? searchInputEl.value.trim().toLowerCase() : '';
+            if (keyword) {
+                allMembersSorted = allMembersSorted.filter(m => m.name.toLowerCase().includes(keyword));
             }
 
             document.getElementById('tab-queue-count').innerText = members.filter(m => m.active).length;
