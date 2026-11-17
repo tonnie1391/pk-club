@@ -456,27 +456,29 @@
 
         const STORAGE_KEY = 'badminton_queue_members_v2';
 
-        // Load data on start
+        // Load data on start - Hiển thị dữ liệu ngay lập tức tránh bị trống màn hình
         window.onload = function() {
             // Initialize mode UI
             applyStorageModeUI();
             updateHeaderActions();
 
+            // Luôn load dữ liệu có sẵn (Local hoặc cache cũ) lên trước để giao diện mượt ngay lập tức
+            loadFromStorage();
+            if (members.length === 0 && storageMode === 'local') {
+                members = [
+                    { id: '1', name: 'Nguyễn Văn A', rank: 'A+', active: true, matchesPlayed: 2, timestamp: 1000 },
+                    { id: '2', name: 'Trần Thị B', rank: 'B+', active: true, matchesPlayed: 1, timestamp: 2000 },
+                    { id: '3', name: 'Lê Hoàng C', rank: 'B', active: true, matchesPlayed: 2, timestamp: 3000 },
+                    { id: '4', name: 'Phạm Đức D', rank: 'C+', active: true, matchesPlayed: 1, timestamp: 4000 },
+                    { id: '5', name: 'Vũ Thị T', rank: 'C-', active: false, matchesPlayed: 0, timestamp: 5000 }
+                ];
+                saveToStorage();
+            }
+            render(); // Render dữ liệu cũ lên trước cho có giao diện liền
+
+            // Nếu đang bật chế độ Cloud, thực hiện fetch ngầm dữ liệu mới nhất từ Google Sheet
             if (storageMode === 'cloud' && sheetsScriptUrl && sheetsScriptUrl !== DEFAULT_SHEETS_URL) {
                 fetchFromGoogleSheets();
-            } else {
-                loadFromStorage();
-                if (members.length === 0) {
-                    members = [
-                        { id: '1', name: 'Nguyễn Văn Ánh', rank: 'A+', active: true, matchesPlayed: 2, timestamp: 1000 },
-                        { id: '2', name: 'Trần Thị Bình', rank: 'B+', active: true, matchesPlayed: 1, timestamp: 2000 },
-                        { id: '3', name: 'Lê Hoàng Cường', rank: 'B', active: true, matchesPlayed: 2, timestamp: 3000 },
-                        { id: '4', name: 'Phạm Đức Dũng', rank: 'C+', active: true, matchesPlayed: 1, timestamp: 4000 },
-                        { id: '5', name: 'Vũ Thị Trâm', rank: 'C-', active: false, matchesPlayed: 0, timestamp: 5000 }
-                    ];
-                    saveToStorage();
-                }
-                render();
             }
         };
 
