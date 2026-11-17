@@ -590,17 +590,33 @@
             }
             try {
                 updateSyncBadge(true);
-                const res = await fetch(sheetsScriptUrl);
+                const res = await fetch(sheetsScriptUrl, { method: 'GET', mode: 'cors' });
+                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                
                 const data = await res.json();
                 if (Array.isArray(data)) {
                     members = data;
-                    // Không ghi đè dữ liệu Cloud vào local nữa để đảm bảo 2 danh sách tách biệt
+                    updateSyncBadge(true);
                     render();
+                } else {
+                    throw new Error("Dữ liệu trả về không đúng định dạng mảng");
                 }
             } catch (err) {
                 console.error("Sheets Fetch Error:", err);
                 updateSyncBadge(false);
-                render();
+                showToast("Không thể kết nối Google Sheet! Kiểm tra lại URL API.");
+                
+                // Hiển thị thông báo lỗi trực tiếp lên danh sách để dễ nhận biết
+                const membersListContainer = document.getElementById('members-list');
+                if (membersListContainer) {
+                    membersListContainer.innerHTML = `
+                        <div class="bg-red-50 border border-red-200 rounded-2xl p-6 text-center text-red-600 text-xs space-y-2">
+                            <i class="fa-solid fa-triangle-exclamation text-xl"></i>
+                            <div class="font-bold">Không thể kết nối tới Google Sheets API!</div>
+                            <div class="text-slate-500 text-[11px]">Vui lòng kiểm tra lại quyền truy cập hoặc Deploy lại Google Apps Script phiên bản mới nhất.</div>
+                        </div>
+                    `;
+                }
             }
         }
 
