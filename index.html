@@ -284,7 +284,8 @@
         }
 
         // Default Google Apps Script URL integrated directly in code
-        const DEFAULT_SHEETS_URL = 'https://script.google.com/macros/s/THAY_LINK_GOOGLE_SCRIPT_CUA_BAN_VAO_DAY/exec';
+        // HÃY DÁN LINK WEB APP CỦA BẠN VÀO DÒNG DƯỚI ĐÂY:
+        const DEFAULT_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbwt1Vk6vsJIO0wOQWY3H3J2-54mg0GxTbjZZBQGhhuTE-CJbgMLY9OvYUXDuGO4aSQAmQ/exec';
 
         // State Management
         let members = [];
@@ -312,12 +313,12 @@
         // Load data on start
         window.onload = function() {
             const urlInput = document.getElementById('sheets-url-input');
-            if (urlInput) urlInput.value = sheetsScriptUrl;
+            if (urlInput) urlInput.value = (sheetsScriptUrl !== 'DÁN_LINK_GOOGLE_SCRIPT_TẠI_ĐÂY') ? sheetsScriptUrl : '';
 
             // Initialize mode UI
             applyStorageModeUI();
 
-            if (storageMode === 'cloud' && sheetsScriptUrl && sheetsScriptUrl !== 'https://script.google.com/macros/s/THAY_LINK_GOOGLE_SCRIPT_CUA_BAN_VAO_DAY/exec') {
+            if (storageMode === 'cloud' && sheetsScriptUrl && sheetsScriptUrl !== 'DÁN_LINK_GOOGLE_SCRIPT_TẠI_ĐÂY') {
                 fetchFromGoogleSheets();
             } else {
                 loadFromStorage();
@@ -342,7 +343,7 @@
 
             if (mode === 'cloud') {
                 showToast("Đã chuyển sang chế độ Cloud (Google Sheet)");
-                if (sheetsScriptUrl && sheetsScriptUrl !== 'https://script.google.com/macros/s/THAY_LINK_GOOGLE_SCRIPT_CUA_BAN_VAO_DAY/exec') {
+                if (sheetsScriptUrl && sheetsScriptUrl !== 'DÁN_LINK_GOOGLE_SCRIPT_TẠI_ĐÂY') {
                     fetchFromGoogleSheets();
                 } else {
                     updateSyncBadge(false);
